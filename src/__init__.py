@@ -4,6 +4,7 @@ from flask_cors import CORS
 from src.config import Config
 from src.commands import init_db, populate_db
 from src.extensions import db, migrate, api as restx_api
+from src import api as api_package
 
 COMMANDS = [init_db, populate_db]
 

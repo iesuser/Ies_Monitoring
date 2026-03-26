@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import sys
+from email import encoders
+from email.mime.base import MIMEBase
 import io
 import base64
 import pickle
@@ -14,13 +15,14 @@ from googleapiclient.discovery import build
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 
+
 def gmail_authenticate():
     creds = None
 
     # აბსოლუტური ბილიკები ამ ფაილის მდებარეობიდან
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    token_path = os.path.join(base_dir, 'token.pickle')
-    credentials_path = os.path.join(base_dir, 'credentials.json')
+    token_path = os.path.join(base_dir, 'credentials/token.pickle')
+    credentials_path = os.path.join(base_dir, 'credentials/credentials.json')
 
     # Token ფაილის წაკითხვა
     if os.path.exists(token_path):
@@ -39,6 +41,7 @@ def gmail_authenticate():
 
     return build('gmail', 'v1', credentials=creds)
 
+
 # მითითებული filename ფაილიდან ფუნქცია კითხულობს სახელ გვარს და ელფოსტას და აბრუნებს list ების სახით
 # ქვემოთ ნაჩვენებია მაგალითი თუ როგორი შეიძლება იყოს filename ფაილი:
 def get_contacts(filename): 
@@ -51,6 +54,7 @@ def get_contacts(filename):
             emails.append(splited_line[2])
     return fullnames, emails
 
+
 # ფუნქცია ფაილიდან კითხულობს ელფოსტის მისამართებს
 # ქვემოთ ნაჩვენებია მაგალითი თუ როგორი შეიძლება იყოს filename ფაილი:
 def get_emails(filename):
@@ -61,8 +65,8 @@ def get_emails(filename):
     return emails
 
 # ელფოსტის გასაგზავნი ფუნქცია
-# emails პარამეტრი შეიძლება იყოს ფაილის მისამართი სადაც ყოველი ახალი ხაზი არის საკონტაქტო ელფოსტა ან
-def send_mail(emails, subject, message, email_type='plain'):
+# emails პარამეტრი შეიძლება იყოს ფაილის მისამართი სადაც ყოველი ახალი ხაზი არის საკონტაქტო ელფოსტა ან ელფოსტების list ები
+def send_mail(emails, subject, message, email_type='plain', attachments=None):
     if isinstance(emails, str):
         emails = get_emails(emails)
 
@@ -72,6 +76,15 @@ def send_mail(emails, subject, message, email_type='plain'):
         msg['To'] = to_email
         msg['Subject'] = subject
         msg.attach(MIMEText(message, email_type))
+        if attachments:
+            for file_path in attachments:
+                if os.path.exists(file_path):
+                    with open(file_path, "rb") as f:
+                        attachment = MIMEBase('application', 'octet-stream')
+                        attachment.set_payload(f.read())
+                    encoders.encode_base64(attachment)
+                    attachment.add_header('Content-Disposition', f'attachment; filename={os.path.basename(file_path)}')
+                    msg.attach(attachment)
         raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
 
         try:

@@ -6,3 +6,7 @@ shakemap_ns = api.namespace('Calc ShakeMap', description='API endpoint for Shake
 shakemap_model = shakemap_ns.model("SeisCompEvent", {
     "seiscomp_oid": fields.String(required=True, description="SeisComP Event OID")
 })
+
+# Request Parser
+shakemap_parser = reqparse.RequestParser()
+shakemap_parser.add_argument("seiscomp_oid", type=str, required=False, help="SeisComP OID (optional)")

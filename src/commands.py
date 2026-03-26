@@ -12,7 +12,6 @@ def init_db_core():
     db.drop_all()
     db.create_all()
 
-
 def populate_db_core():
     """Insert one sample seismic event (for manual testing/CLI)."""
     new_event = SeismicEvent(
@@ -30,9 +29,7 @@ def populate_db_core():
     )
     new_event.create()
 
-
 # --- Click CLI commands (thin wrappers around core logic) ---
-
 
 @click.command("init_db")
 @with_appcontext
@@ -41,7 +38,6 @@ def init_db():
     click.echo("Creating Database")
     init_db_core()
     click.echo("Database Created")
-
 
 @click.command("populate_db")
 @with_appcontext

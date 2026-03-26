@@ -13,8 +13,8 @@ def email_sender(event_id, parsed_data, base_path=BASE_PATH_DEFAULT):
         Event ID: {event_id}
         Time: {parsed_data['time']}
         Location: {parsed_data['latitude']}, {parsed_data['longitude']}
-        Depth: {parsed_data['depth_km']} km
-        Magnitude: {parsed_data['magnitude']}
+        Depth: {parsed_data['depth']} km
+        Magnitude: {parsed_data['ml']}
     """
     product_path = os.path.join(base_path, event_id, "current/products")
     attachments = [os.path.join(product_path, f) for f in ["pga.jpg", "pgv.jpg", "intensity.jpg"] if os.path.exists(os.path.join(product_path, f))]

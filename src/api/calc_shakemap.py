@@ -2,28 +2,41 @@ from flask_restx import Resource
 from flask import request
 import os
 
-from src.api.nsmodels import shakemap_ns, shakemap_model
+from src.api.nsmodels import shakemap_ns, shakemap_parser, shakemap_model
 from src.models.seismic_event import SeismicEvent
 from src.workers.run_shakemap import run_shakemap_worker
+from src.config import Config
 
 @shakemap_ns.route("/run_shakemap")
+@shakemap_ns.doc(
+    responses={
+        200: 'OK',
+        201: 'Created',
+        400: 'Invalid Argument',
+        401: 'Unauthorized',
+        404: 'Not Found'
+    }
+)
 class RunShakeMap(Resource):
 
     @shakemap_ns.expect(shakemap_model)
+    @shakemap_ns.doc(security='ApiKeyAuth', description='Create or update a seismic event (requires X-API-Key)')
     def post(self):
 
-        # API Key check
-        api_key = request.headers.get("X-API-KEY")
-        if api_key != os.getenv("SHAKEMAP_API_KEY", "super-secret-key"):
-            return {"error": "Unauthorized"}, 401
+        # --- Auth check ---
+        api_key = request.headers.get('X-API-Key')
+        if api_key != Config.API_KEY:
+            return {'error': 'Unauthorized - Invalid API key'}, 401
 
-        data = request.json
-        seiscomp_oid = data.get("seiscomp_oid")
+        
+        # გამოიყენე parser
+        args = shakemap_parser.parse_args()
+        seiscomp_oid = args["seiscomp_oid"]
 
         if not seiscomp_oid:
             return {"error": "seiscomp_oid required"}, 400
 
-        # 1️⃣ DB query to get event data
+        # DB query to get event data
         event = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
         if not event:
             return {"error": f"Event {seiscomp_oid} not found"}, 404
@@ -33,11 +46,11 @@ class RunShakeMap(Resource):
             "time": event.origin_time.isoformat(),
             "longitude": event.longitude,
             "latitude": event.latitude,
-            "depth_km": event.depth_km,
-            "magnitude": event.magnitude
+            "depth": event.depth,
+            "ml": event.ml
         }
 
-        # 2️⃣ Run async worker
+        # Run async worker
         run_shakemap_worker(parsed_data)
 
         return {"status": "started", "event_id": seiscomp_oid}, 202
