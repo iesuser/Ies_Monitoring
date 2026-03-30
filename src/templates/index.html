@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}
+EarthQuakeWatch | Home
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+
+  <div class="row align-items-center mb-5">
+    <div class="col-md-7">
+      <h1 class="display-5 fw-bold">🌍 EarthQuakeWatch</h1>
+      <p class="lead text-muted mt-3">
+        Real-time seismic monitoring and analytics platform built with
+        Flask and AWS cloud services.
+      </p>
+
+      <div class="mt-4">
+        <a href="/dashboard" class="btn btn-primary btn-lg me-2">
+          Open Dashboard
+        </a>
+        <a href="/stats" class="btn btn-outline-secondary btn-lg">
+          API /stats
+        </a>
+      </div>
+    </div>
+
+    <div class="col-md-5 text-center d-none d-md-block">
+      <img
+        src="{{ url_for('static', filename='img/earthquakes.png') }}"
+        class="img-fluid"
+        style="max-height: 260px;"
+        alt="Earthquake"
+      >
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">📡 Data Ingestion</h5>
+          <p class="card-text text-muted">
+            Hourly synchronization of seismic catalogs into AWS RDS.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">📊 Analytics</h5>
+          <p class="card-text text-muted">
+            Live statistics for 24h / 7d / 1y via REST API.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">☁️ Cloud Ready</h5>
+          <p class="card-text text-muted">
+            Designed for EventBridge, Lambda, S3, and Athena.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

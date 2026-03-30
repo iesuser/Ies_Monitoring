@@ -16,7 +16,7 @@ def email_sender(event_id, parsed_data, base_path=BASE_PATH_DEFAULT):
     Location: {parsed_data["latitude"]}, {parsed_data["longitude"]}
     Depth: {parsed_data["depth"]} km
     Magnitude: {parsed_data["ml"]}
-'''
+    '''
 
     base_path = f"/home/sysop/shakemap_profiles/default/data/{event_id}/current/products"
 
