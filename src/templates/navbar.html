@@ -10,11 +10,25 @@
             </div>
             <div class="offcanvas-body">
                 <ul class="navbar-nav justify-content-start flex-grow-1 pe-3" id="navLinksStart">
-                    <!-- Navigation items added here -->
-                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                    <li class="nav-item">
+                        <a
+                            class="nav-link {% if request.path == '/' %}active text-primary fw-semibold{% endif %}"
+                            href="/"
+                        >
+                            Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a
+                            class="nav-link {% if request.path.startswith('/shakemap') or request.path.startswith('/dashboard') %}active text-primary fw-semibold{% endif %}"
+                            href="/shakemap"
+                        >
+                            ShakeMap
+                        </a>
+                    </li>
                 </ul>
                 <ul class="navbar-nav justify-content-end flex-grow-1 pe-3" id="navLinksEnd">
-                    <!-- Login, Registration, and Logout nav items will be added here by JavaScript -->
+                    <!-- ავტორიზაციასთან დაკავშირებული ბმულები დაემატება JavaScript-ით -->
                 </ul>
             </div>
         </div>

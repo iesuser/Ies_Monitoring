@@ -61,6 +61,8 @@ class SeismicListAPI(Resource):
             exist_event.region_en = args.get('region_en')
             exist_event.area = args.get('area')
             exist_event.ml = args.get('ml')
+            if args.get('shakemap_calculated') is not None:
+                exist_event.shakemap_calculated = args.get('shakemap_calculated')
 
             exist_event.save()
             return {
@@ -80,7 +82,8 @@ class SeismicListAPI(Resource):
                 region_ge=args.get('region_ge'),
                 region_en=args.get('region_en'),
                 area=args.get('area'),
-                ml=args.get('ml')
+                ml=args.get('ml'),
+                shakemap_calculated=args.get('shakemap_calculated') or False
             )
             new_event.create()
 

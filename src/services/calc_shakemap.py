@@ -17,6 +17,15 @@ def calc_shakemap(parsed_data):
 
     bash_command = f'eval "$({shlex.quote(conda_exe)} shell.bash hook)" && conda activate shakemap && {sm_create_cmd} && {shake_cmd}'
 
-    subprocess.run(["/bin/bash", "-lc", bash_command], check=True)
+    result = subprocess.run(
+        ["/bin/bash", "-lc", bash_command],
+        check=True,
+        capture_output=True,
+        text=True
+    )
     
     logging.info(f"ShakeMap finished for event {event_id}")
+    return {
+        "stdout": result.stdout.strip(),
+        "stderr": result.stderr.strip()
+    }

@@ -1,6 +1,5 @@
 from flask_restx import Resource
 from flask import request
-import os
 
 from src.api.nsmodels import shakemap_ns, shakemap_parser, shakemap_model
 from src.models.seismic_event import SeismicEvent
@@ -51,7 +50,14 @@ class RunShakeMap(Resource):
             "desc": event.region_ge or "Event Description"
         }
 
-        # Run async worker
-        run_shakemap_worker(parsed_data)
-
-        return {"status": "started", "event_id": seiscomp_oid}, 202
+        try:
+            result = run_shakemap_worker(parsed_data)
+            event.shakemap_calculated = True
+            event.save()
+            return result, 200
+        except Exception as e:
+            return {
+                "status": "failed",
+                "event_id": seiscomp_oid,
+                "error": str(e)
+            }, 500

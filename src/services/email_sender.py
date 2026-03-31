@@ -1,10 +1,10 @@
 import os, logging
 import utils.ies_mail_sender as ies_mail_sender
+from src.workers.run_shakemap import BASE_PATH_DEFAULT
 
-BASE_PATH_DEFAULT = "/home/sysop/shakemap_profiles/default/data"
 MAIL_LIST_PATH = os.path.join(os.path.dirname(__file__), "mail_list")
 
-def email_sender(event_id, parsed_data, base_path=BASE_PATH_DEFAULT):
+def email_sender(event_id, parsed_data):
 
     email_title = f"მიწისძვრა - {event_id}"
     email_message = f'''
@@ -18,28 +18,36 @@ def email_sender(event_id, parsed_data, base_path=BASE_PATH_DEFAULT):
     Magnitude: {parsed_data["ml"]}
     '''
 
-    base_path = f"/home/sysop/shakemap_profiles/default/data/{event_id}/current/products"
+    products_path = f"{BASE_PATH_DEFAULT}/{event_id}/current/products"
 
     # ფაილები
     attachments = [
-        os.path.join(base_path, "pga.jpg"),
-        os.path.join(base_path, "pgv.jpg"),
-        os.path.join(base_path, "intensity.jpg"),
+        os.path.join(products_path, "pga.jpg"),
+        os.path.join(products_path, "pgv.jpg"),
+        os.path.join(products_path, "intensity.jpg"),
     ]
 
     # მხოლოდ არსებული ფაილები
     existing_files = [f for f in attachments if os.path.exists(f)]
 
     if not existing_files:
-        logging.error("არცერთი attachment ვერ მოიძებნა")
-        return
+        raise FileNotFoundError(f"No attachment files found in {products_path}")
+
+    recipients = ies_mail_sender.get_emails(MAIL_LIST_PATH)
+    if not recipients:
+        raise ValueError("Mail list is empty")
 
     ies_mail_sender.send_mail(
-        MAIL_LIST_PATH,
+        recipients,
         email_title,
         email_message,
         attachments=existing_files
     )
 
     logging.info(f"მეილი გაიგზავნა: {event_id}")
+    return {
+        "recipients": recipients,
+        "attachments": existing_files,
+        "products_path": products_path
+    }
 

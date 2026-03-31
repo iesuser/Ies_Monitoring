@@ -16,6 +16,7 @@ event_model = api.model('SeismicEvent', {
     'region_en': fields.String(description='Region EN'),
     'area': fields.String(description='Area name'),
     'ml': fields.Float(required=True, description='Local Magnitude (ML)'),
+    'shakemap_calculated': fields.Boolean(description='Whether ShakeMap is calculated'),
     'created_at': fields.DateTime(description='Record creation timestamp (UTC)')
 })
 
@@ -32,3 +33,4 @@ event_parser.add_argument("region_ge", type=str, required=False, help="Region GE
 event_parser.add_argument("region_en", type=str, required=False, help="Region EN (optional)")
 event_parser.add_argument("area", type=str, required=False, help="Area (optional)")
 event_parser.add_argument("ml", type=float, required=True, help="Local Magnitude (ML)")
+event_parser.add_argument("shakemap_calculated", type=bool, required=False, help="ShakeMap calculated status (optional)")

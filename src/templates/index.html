@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-EarthQuakeWatch | Home
+EarthQuakeWatch | მთავარი
 {% endblock %}
 
 {% block body %}
@@ -11,16 +11,13 @@ EarthQuakeWatch | Home
     <div class="col-md-7">
       <h1 class="display-5 fw-bold">🌍 EarthQuakeWatch</h1>
       <p class="lead text-muted mt-3">
-        Real-time seismic monitoring and analytics platform built with
-        Flask and AWS cloud services.
+        სეისმური მონიტორინგისა და ანალიტიკის პლატფორმა რეალურ დროში,
+        აგებული Flask-ისა და AWS სერვისების გამოყენებით.
       </p>
 
       <div class="mt-4">
-        <a href="/dashboard" class="btn btn-primary btn-lg me-2">
-          Open Dashboard
-        </a>
-        <a href="/stats" class="btn btn-outline-secondary btn-lg">
-          API /stats
+        <a href="/shakemap" class="btn btn-primary btn-lg me-2">
+          ShakeMap-ის გახსნა
         </a>
       </div>
     </div>
@@ -30,7 +27,7 @@ EarthQuakeWatch | Home
         src="{{ url_for('static', filename='img/earthquakes.png') }}"
         class="img-fluid"
         style="max-height: 260px;"
-        alt="Earthquake"
+        alt="მიწისძვრა"
       >
     </div>
   </div>
@@ -39,9 +36,9 @@ EarthQuakeWatch | Home
     <div class="col-md-4">
       <div class="card h-100 shadow-sm">
         <div class="card-body">
-          <h5 class="card-title">📡 Data Ingestion</h5>
+          <h5 class="card-title">📡 მონაცემთა მიღება</h5>
           <p class="card-text text-muted">
-            Hourly synchronization of seismic catalogs into AWS RDS.
+            სეისმური კატალოგების სინქრონიზაცია AWS RDS-ში.
           </p>
         </div>
       </div>
@@ -50,9 +47,9 @@ EarthQuakeWatch | Home
     <div class="col-md-4">
       <div class="card h-100 shadow-sm">
         <div class="card-body">
-          <h5 class="card-title">📊 Analytics</h5>
+          <h5 class="card-title">📊 ანალიტიკა</h5>
           <p class="card-text text-muted">
-            Live statistics for 24h / 7d / 1y via REST API.
+            სეისმური მოვლენების ცოცხალი სტატისტიკა REST API-ის საშუალებით.
           </p>
         </div>
       </div>
@@ -61,9 +58,9 @@ EarthQuakeWatch | Home
     <div class="col-md-4">
       <div class="card h-100 shadow-sm">
         <div class="card-body">
-          <h5 class="card-title">☁️ Cloud Ready</h5>
+          <h5 class="card-title">☁️ Cloud ინფრასტრუქტურა</h5>
           <p class="card-text text-muted">
-            Designed for EventBridge, Lambda, S3, and Athena.
+            პროექტი მორგებულია AWS cloud სერვისებზე.
           </p>
         </div>
       </div>
