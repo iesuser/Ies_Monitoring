@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Define static navigation items
     const navItems = [
         { endpoint: '/', text: 'მთავარი' },
+        { endpoint: '/shakemap', text: 'ShakeMap' },
         // Add other static links as needed
     ];
 
