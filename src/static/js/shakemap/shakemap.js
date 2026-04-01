@@ -148,7 +148,10 @@ async function openGallery(seiscompOid) {
 
         return `
           <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
+            <div class="d-flex align-items-center justify-content-center"> 
+              <p class="card-text mb-0 text-center fw-semibold">${escapeHtml(image.filename)}</p>
+            </div>
+            <div class="card h-90 shadow-sm">
               <a
                 href="${escapeHtml(image.url)}"
                 target="_blank"
@@ -163,9 +166,7 @@ async function openGallery(seiscompOid) {
                   style="cursor: zoom-in;"
                 >
               </a>
-              <div class="card-body">
-                <p class="card-text mb-0 text-center fw-semibold">${escapeHtml(image.filename)}</p>
-              </div>
+
             </div>
           </div>
         `;

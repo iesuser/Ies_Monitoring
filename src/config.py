@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from dotenv import load_dotenv
 import os
 from os import path, sep, pardir
@@ -29,6 +31,10 @@ class Config:
 
     API_KEY = os.getenv('API_KEY', 'default_api_key')
 
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'default_jwt_secret_key')
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(hours=12)
+    
     AUTHORIZATION = {
         'ApiKeyAuth': {
             'type': 'apiKey',
@@ -37,6 +43,11 @@ class Config:
             'description': 'Provide the internal API key for ingestion'
         }
     }
+
+    MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+    MAIL_PORT = os.getenv('MAIL_PORT', 587)
+    MAIL_USERNAME = os.getenv('MAIL_USERNAME', 'your_email@gmail.com')
+    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', 'your_password')
 
 class TestConfig(Config):
 

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}
+    IesProjects - Reset Password
+{% endblock %}
+
+{% block body %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/resetPassword/resetPassword.js') }}" defer></script>
+<script>
+    const token = "{{ token }}"
+</script>
+
+
+<div class="row d-flex justify-content-center align-items-center h-100">
+    <div class="col-md-9 col-lg-6 col-xl-5">
+        <img src="/static/img/login_draw.webp"
+            class="img-fluid" alt="Sample image">
+    </div>
+    <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
+        <div class="text-center mb-5">
+            <h2>პაროლის შეცვლა</h2>
+        </div>
+        <form id="loginForm">
+            <!-- Password input -->
+            <div class="form-outline mb-4">
+                <label class="form-label" for="password">პაროლი</label>
+                <input type="password" id="password" name="password" class="form-control form-control-lg"
+                    placeholder="შეიყვანეთ ახალი პაროლი" required/>
+                    <i class="togglePassword"><img src="/static/img/eye-hide.svg" alt="Icon eye-hide" width="25px" class="togglePasswordImg"></i>
+            </div>
+
+            <!-- retype password input -->
+            <div class="form-outline mb-3">
+                <label class="form-label" for="retypePassword">გაიმეორეთ პაროლი</label>
+                <input type="password" id="retypePassword" name="retypePassword" class="form-control form-control-lg"
+                    placeholder="გაიმეორეთ ახალი პაროლი" required/>
+                    <i class="togglePassword"><img src="/static/img/eye-hide.svg" alt="Icon eye-hide" width="25px" class="togglePasswordImg"></i>
+            </div>
+
+
+            <!-- Submit button -->
+            <div class="text-center text-lg-start mt-4 pt-2">
+                <button type="submit" class="btn btn-primary" style="padding-left: 2.5rem; padding-right: 2.5rem;">შეცვლა</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+{% endblock %}

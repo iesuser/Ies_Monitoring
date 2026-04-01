@@ -1,3 +1,5 @@
+<script type="text/javascript" src="{{ url_for('static', filename='js/navbar.js') }}" defer></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/auth/user.js') }}" defer></script>
 <nav class="navbar navbar-expand-lg navbar-light bg-body-tertiary" style="height: 3.5rem;">
     <div class="container-lg">
         <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
@@ -10,27 +12,15 @@
             </div>
             <div class="offcanvas-body">
                 <ul class="navbar-nav justify-content-start flex-grow-1 pe-3" id="navLinksStart">
-                    <li class="nav-item">
-                        <a
-                            class="nav-link {% if request.path == '/' %}active text-primary fw-semibold{% endif %}"
-                            href="/"
-                        >
-                            Home
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a
-                            class="nav-link {% if request.path.startswith('/shakemap') or request.path.startswith('/dashboard') %}active text-primary fw-semibold{% endif %}"
-                            href="/shakemap"
-                        >
-                            ShakeMap
-                        </a>
-                    </li>
+                    <!-- Navigation items added here -->
                 </ul>
                 <ul class="navbar-nav justify-content-end flex-grow-1 pe-3" id="navLinksEnd">
-                    <!-- ავტორიზაციასთან დაკავშირებული ბმულები დაემატება JavaScript-ით -->
+                    <!-- Login, Registration, and Logout nav items will be added here by JavaScript -->
                 </ul>
             </div>
         </div>
     </div>
 </nav>
+
+<!-- The UserModal -->
+{% include "user.html" %}

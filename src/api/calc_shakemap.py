@@ -12,8 +12,8 @@ SHAKEMAP_BASE_PATH = Config.SHAKEMAP_BASE_PATH
 # Allowed images
 ALLOWED_IMAGES = {
     "pga": "pga.jpg",
-    "pgv": "pgv.jpg",
     "intensity": "intensity.jpg",
+    "pgv": "pgv.jpg",
 }
 
 

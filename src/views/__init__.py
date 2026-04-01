@@ -5,3 +5,4 @@
 """
 
 from src.views.shakemap.routes import shakemap_blueprint
+from src.views.auth.routes import auth_blueprint
