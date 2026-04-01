@@ -12,6 +12,8 @@ class Config:
     BASE_DIR = path.abspath(path.dirname(__file__) + sep + pardir)
     # Templates
     TEMPLATES_FOLDERS = path.join(BASE_DIR, 'src', 'templates')
+    # ShakeMap base path
+    SHAKEMAP_BASE_PATH = os.getenv('SHAKEMAP_BASE_PATH', '/home/sysop/shakemap_profiles/default/data')  # default path
     # SQLAlchemy
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # Default: SQLite (local dev)

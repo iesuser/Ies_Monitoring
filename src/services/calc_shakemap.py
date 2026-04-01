@@ -1,9 +1,10 @@
 import subprocess, os, shlex, logging
 
+# ShakeMap calculation function
 def calc_shakemap(parsed_data):
     event_id = parsed_data["event_id"]
     logging.info(f"Starting ShakeMap calculation for event {event_id}")
-
+    # ShakeMap create command
     sm_create_cmd = (
         f'sm_create -f {event_id} -e ies {parsed_data["time"]} '
         f'{parsed_data["longitude"]} {parsed_data["latitude"]} '
@@ -25,6 +26,7 @@ def calc_shakemap(parsed_data):
     )
     
     logging.info(f"ShakeMap finished for event {event_id}")
+    # Return stdout and stderr results
     return {
         "stdout": result.stdout.strip(),
         "stderr": result.stderr.strip()

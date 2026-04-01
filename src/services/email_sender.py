@@ -1,9 +1,13 @@
 import os, logging
 import utils.ies_mail_sender as ies_mail_sender
-from src.workers.run_shakemap import BASE_PATH_DEFAULT
+from src.config import Config
 
+# ShakeMap base path    
+SHAKEMAP_BASE_PATH = Config.SHAKEMAP_BASE_PATH
+# Mail list path
 MAIL_LIST_PATH = os.path.join(os.path.dirname(__file__), "mail_list")
 
+# Email sender function
 def email_sender(event_id, parsed_data):
 
     email_title = f"მიწისძვრა - {event_id}"
@@ -18,7 +22,7 @@ def email_sender(event_id, parsed_data):
     Magnitude: {parsed_data["ml"]}
     '''
 
-    products_path = f"{BASE_PATH_DEFAULT}/{event_id}/current/products"
+    products_path = f"{SHAKEMAP_BASE_PATH}/{event_id}/current/products"
 
     # ფაილები
     attachments = [
@@ -45,9 +49,10 @@ def email_sender(event_id, parsed_data):
     )
 
     logging.info(f"მეილი გაიგზავნა: {event_id}")
+    
+    # Return recipients, email message and attachments list
     return {
         "recipients": recipients,
-        "attachments": existing_files,
-        "products_path": products_path
+        "email_message": email_message,
+        "attachments_list": existing_files
     }
-

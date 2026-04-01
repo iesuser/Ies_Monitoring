@@ -3,7 +3,7 @@ import click
 from datetime import datetime
 
 from src.extensions import db
-from src.models import SeismicEvent
+from src.models import SeismicEvent, User, Role
 
 # --- Core logic (გამოსაყენებელი როგორც CLI-დან, ისე ტესტებიდან) ---
 
@@ -15,19 +15,35 @@ def init_db_core():
 def populate_db_core():
     """Insert one sample seismic event (for manual testing/CLI)."""
     new_event = SeismicEvent(
-        event_id=566058,
-        seiscomp_oid="oid123",
-        origin_time=datetime(2025, 8, 15, 12, 0, 0),
-        origin_msec=123,
-        latitude=40.7128,
-        longitude=-74.0060,
-        depth=10.0,
-        region_ge="RegionGE",
-        region_en="RegionEN",
+        event_id=539870,
+        seiscomp_oid="ies2024oeem",
+        origin_time=datetime(2024, 6, 3, 22, 3, 40),
+        origin_msec=130,
+        latitude=42.5095,
+        longitude=43.5328,
+        depth=8,
+        region_ge="ქალაქი ონი - სამხრეთ-აღმოსავლეთი - 8კმ. სოფელი ირი.",
+        region_en="City Oni - South-East - 8km. Village Iri.",
         area="local",
-        ml=3.5,
+        ml=5.33,
     )
     new_event.create()
+
+    click.echo("Creating Role")
+    role = Role(name="Admin", is_admin=True, can_users=True, can_shakemap=True)
+    role.create()
+    role = Role(name="User")
+    role.create()
+
+    click.echo("Creating Admin User")
+    admin_user = User (
+        name="Roma",
+        lastname="Grigalashvili",
+        email="roma.grigalashvili@iliauni.edu.ge",
+        password="Grigalash1",
+        role_id=1
+    )
+    admin_user.create()
 
 # --- Click CLI commands (thin wrappers around core logic) ---
 
