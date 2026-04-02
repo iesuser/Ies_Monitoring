@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}
+    IES_MONITORING - 404
+{% endblock %}
+
+{% block body %}
+    <div class="container h-100 bg-white p-3">
+        <div class="row mt-5"> 
+            <div class="col">
+                <div class="text-center">
+                    <div
+                        style="background-image: url('/static/img/404.gif'); height: 60vh; background-position: center; background-size: cover;"
+                    >
+                        <h1 class="fs-x text-center">404</h1>
+                        <p class="text-center">გვერდი ვერ მოიძებნა.</p>
+                    </div>
+                    <div class="row">
+                        <h2>როგორც ჩანს, გზა აგერია.</h2>
+                        <p>გვერდი, რომელსაც ეძებ, ამჟამად მიუწვდომელია.</p>
+                    </div>
+                    <a href="/" class="btn btn-sm btn-warning mb-5">მთავარ გვერდზე დაბრუნება</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

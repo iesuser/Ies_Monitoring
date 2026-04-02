@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}
+EarthQuakeWatch | მთავარი
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+
+  <div class="row align-items-center mb-5">
+    <div class="col-md-7">
+      <h1 class="display-5 fw-bold">🌍 EarthQuakeWatch</h1>
+      <p class="lead text-muted mt-3">
+        სეისმური მონიტორინგისა და ანალიტიკის პლატფორმა რეალურ დროში,
+        აგებული Flask-ისა და AWS სერვისების გამოყენებით.
+      </p>
+
+      <div class="mt-4">
+        <a href="/shakemap" class="btn btn-primary btn-lg me-2">
+          ShakeMap-ის გახსნა
+        </a>
+      </div>
+    </div>
+
+    <div class="col-md-5 text-center d-none d-md-block">
+      <img
+        src="{{ url_for('static', filename='img/earthquakes.png') }}"
+        class="img-fluid"
+        style="max-height: 260px;"
+        alt="მიწისძვრა"
+      >
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">📡 მონაცემთა მიღება</h5>
+          <p class="card-text text-muted">
+            სეისმური კატალოგების სინქრონიზაცია AWS RDS-ში.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">📊 ანალიტიკა</h5>
+          <p class="card-text text-muted">
+            სეისმური მოვლენების ცოცხალი სტატისტიკა REST API-ის საშუალებით.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">☁️ Cloud ინფრასტრუქტურა</h5>
+          <p class="card-text text-muted">
+            პროექტი მორგებულია AWS cloud სერვისებზე.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

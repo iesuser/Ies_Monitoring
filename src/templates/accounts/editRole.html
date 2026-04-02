@@ -1,0 +1,40 @@
+<!-- Edit Role Modal -->
+<div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editRoleModalLabel">როლის რედაქტირება</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRoleForm" class="d-flex justify-content-center align-items-center row">
+                    <input type="hidden" id="editRoleId" name="role_id">
+                    <div class="row">
+                        <div class="mb-3">
+                            <label for="editRoleName" class="form-label">როლის სახელი</label>
+                            <input type="text" class="form-control" id="editRoleName" name="name" required>
+                        </div>
+                    </div>
+                    <div class="row ms-3">
+                        <div class="form-check col">
+                            <input type="checkbox" class="form-check-input" id="editIsAdmin" name="is_admin">
+                            <label class="form-check-label" for="editIsAdmin">ადმინისტრატორი</label>
+                        </div>
+                        <div class="form-check col">
+                            <input type="checkbox" class="form-check-input" id="editCanUsers" name="can_users">
+                            <label class="form-check-label" for="editCanUsers">მომხმარებლების მართვა</label>
+                        </div>
+                    </div>
+                    <div class="row ms-3">
+                        <div class="form-check col">
+                            <input type="checkbox" class="form-check-input" id="editCanShakemap" name="can_shakemap">
+                            <label class="form-check-label" for="editCanShakemap">Shakemap მართვა</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">როლის რედაქტირება</button>
+                </form>
+                <div id="editRoleAlert" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>

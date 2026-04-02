@@ -1,0 +1,39 @@
+<!-- Create Role Modal -->
+<div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createRoleModalLabel">როლის შექმნა</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createRoleForm" class="d-flex justify-content-center align-items-center row">
+                    <div class="row">
+                        <div class="mb-3">
+                            <label for="roleName" class="form-label">როლის სახელი</label>
+                            <input type="text" class="form-control" id="roleName" name="name" required>
+                        </div>
+                    </div>
+                    <div class="row ms-3">
+                        <div class="form-check col">
+                            <input type="checkbox" class="form-check-input" id="isAdmin" name="is_admin">
+                            <label class="form-check-label" for="isAdmin">ადმინისტრატორი</label>
+                        </div>
+                        <div class="form-check col">
+                            <input type="checkbox" class="form-check-input" id="canUsers" name="can_users">
+                            <label class="form-check-label" for="canUsers">მომხმარებლების მართვა</label>
+                        </div>
+                    </div>
+                    <div class="row ms-3">
+                        <div class="form-check col">
+                            <input type="checkbox" class="form-check-input" id="canShakemap" name="can_shakemap">
+                            <label class="form-check-label" for="canShakemap">Shakemap მართვა</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">როლის შექმნა</button>
+                </form>
+                <div id="createRoleAlert" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>

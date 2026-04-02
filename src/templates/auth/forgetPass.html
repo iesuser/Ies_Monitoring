@@ -1,0 +1,33 @@
+
+<!-- The Combined ExportCSVForm Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+    
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title">პაროლის აღდგენა</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+    
+            <!-- Modal body -->
+            <div class="modal-body">
+                 <div id="forgetAlertDiv"></div>
+                <form class="row mt-2 d-flex justify-content-center align-items-center" id="modalResetPassword">
+                    
+                    <div class="col m-2">
+                        <div class="text-center pt-2">შეიყვანეთ თქვენი ელ.ფოსტა:</div>
+                        <div class="text-center fw-lighter">example@example.com</div>
+                        <input type="email" class="text-center form-control form-control" id="modalEmail" name="modalEmail" required>
+                    </div>
+                   
+                    <div class="m-5 text-center">
+                        <button type="submit" class="btn btn-sm btn-primary" id="modalSubmit">გაგზავნა</button>
+                    </div>
+                    <!-- Optional: You can add a loading spinner or message while the export is being processed -->
+                    <div id="loadingMessage" class="text-center" style="display: none;">ელ.ფოსტა იგზავნება</div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

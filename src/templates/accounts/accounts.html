@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}
+    IesData - Accounts
+{% endblock %}
+
+{% block body %} 
+<script type="text/javascript" src="{{ url_for('static', filename='js/accounts/accounts.js') }}" defer></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/accounts/changeRole.js') }}" defer></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/accounts/createRole.js') }}" defer></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/accounts/editRole.js') }}" defer></script>
+
+<!-- Table Header -->
+<div class="d-flex justify-content-center">
+    <h4 class="modal-title m-3">Dashboard</h4>
+</div>
+<div class="table-responsive-xxl table-bordered text-center mt-2" style="font-size: small;">
+    <table class="table align-middle rounded-2 border-muted mb-0 bg-white">
+        <td>
+            <a type="button" class="btn btn-sm btn-primary" onclick="createRole()">როლის დამატება</a>
+        </td>
+        <td>
+            <a type="button" class="btn btn-sm btn-primary" href="/registration">მომხმარებლის დამატება</a>
+        </td>
+    </table>
+</div>
+<div class="table-responsive-xxl text-center mt-1 mb-3" style="font-size: small;">
+    <table class="table align-middle table-bordered border-muted mb-0 bg-white table-striped">
+        <thead class="table-primary">
+            <tr>
+                <th>Username</th>
+                <th>Role Name</th>
+                <th>Is Admin</th>
+                <th>Can Users</th>
+                <th>Can Shakemap</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="accountsTableBody">
+            <!-- Data will be populated dynamically here -->
+        </tbody>
+    </table>
+</div>
+
+{% include "changeRole.html" %}
+{% include "createRole.html" %}
+{% include "editRole.html" %}
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}
+    EarthQuakeWatch - Change Password
+{% endblock %}
+
+{% block body %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/auth/changePass.js') }}" defer></script>
+
+<div class="row d-flex justify-content-center align-items-center h-100">
+    <div class="col-md-9 col-lg-6 col-xl-5">
+        <img src="/static/img/login_draw.webp"
+            class="img-fluid" alt="Sample image">
+    </div>
+    <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
+        <div class="text-center mb-5">
+            <h2>პაროლის შეცვლა</h2>
+        </div>
+        <form id="changePasswordForm">
+            <div class="form-outline mb-4">
+                <label class="form-label" for="currentPassword">ძველი პაროლი</label>
+                <input type="password" id="currentPassword" name="currentPassword" class="form-control form-control-lg"
+                    placeholder="შეიყვანეთ ძველი პაროლი" required/>
+            </div>
+
+            <div class="form-outline mb-4">
+                <label class="form-label" for="password">ახალი პაროლი</label>
+                <input type="password" id="password" name="password" class="form-control form-control-lg"
+                    placeholder="შეიყვანეთ ახალი პაროლი" required/>
+            </div>
+
+            <div class="form-outline mb-3">
+                <label class="form-label" for="retypePassword">გაიმეორეთ ახალი პაროლი</label>
+                <input type="password" id="retypePassword" name="retypePassword" class="form-control form-control-lg"
+                    placeholder="გაიმეორეთ ახალი პაროლი" required/>
+            </div>
+
+            <div class="text-center text-lg-start mt-4 pt-2">
+                <button type="submit" class="btn btn-primary" style="padding-left: 2.5rem; padding-right: 2.5rem;">შეცვლა</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
