@@ -90,9 +90,7 @@ async function submitEditEvent(event) {
     if (window.loadEvents) {
       await window.loadEvents();
     }
-    if (editEventModal) {
-      editEventModal.hide();
-    }
+    closeModal("editEventModal");
   } catch {
     const message = "მოთხოვნა ჩავარდა ივენთის განახლებისას.";
     editEventStatus.textContent = message;

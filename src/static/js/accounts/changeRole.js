@@ -70,6 +70,6 @@ function changeRole(userUUID) {
         });
 
         // Call API to update role here
-        changeRoleModal.hide();
+        closeModal('changeRoleModal');
     };
 }

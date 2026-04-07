@@ -38,6 +38,7 @@ function login(event) {
     })
     .catch(error => {
         console.error('Error:', error);
+        showAlert('alertPlaceholder', 'danger', 'მოთხოვნა ჩავარდა. გთხოვთ სცადოთ თავიდან.');
     });
 }
 

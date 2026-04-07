@@ -82,11 +82,11 @@ function renderEvents(events) {
     )
     .join("");
 
-  eventsStatus.textContent = `ჩაიტვირთა ${sortedEvents.length} ივენთი.`;
+  eventsStatus.textContent = `ჩაიტვირთა ${sortedEvents.length} მიწისძვრა.`;
 }
 
 async function loadEvents() {
-  eventsStatus.textContent = "ივენთები იტვირთება...";
+  eventsStatus.textContent = "მიწისძვრები იტვირთება...";
 
   try {
     const response = await fetch("/api/events", {
@@ -97,14 +97,14 @@ async function loadEvents() {
 
     if (!response.ok) {
       eventsTableBody.innerHTML = "";
-      eventsStatus.textContent = payload.error || "ივენთების ჩატვირთვა ვერ მოხერხდა.";
+      eventsStatus.textContent = payload.error || "მიწისძვრების ჩატვირთვა ვერ მოხერხდა.";
       return;
     }
 
     renderEvents(payload);
   } catch {
     eventsTableBody.innerHTML = "";
-    eventsStatus.textContent = "მოთხოვნა ჩავარდა ივენთების ჩატვირთვისას.";
+    eventsStatus.textContent = "მოთხოვნა ჩავარდა მიწისძვრების ჩატვირთვისას.";
   }
 }
 window.escapeHtml = escapeHtml;

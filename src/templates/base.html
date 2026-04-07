@@ -26,8 +26,14 @@
     {% from "macros/modals.html" import global_confirm_modal %}
     {% if request.path != url_for('auth.auth') and not request.path.startswith('/reset_password/') %}
     {% include "navbar.html" %}
+    <div class="alert-surface py-2">
+        <div id="alertPlaceholder" class="container-lg"></div>
+    </div>
     <section class="app-content">
     {% else %}
+    <div class="alert-surface py-2">
+        <div id="alertPlaceholder" class="container-lg"></div>
+    </div>
     <section class="app-content">
     {% endif %}
 

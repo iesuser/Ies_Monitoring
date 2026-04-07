@@ -7,6 +7,7 @@ function sendEmail(event) {
     event.preventDefault();
 
     const modalEmail = document.getElementById('modalEmail').value;
+    const modalForm = document.getElementById('modalResetPassword');
 
     const formData = {
         modalEmail: modalEmail
@@ -24,16 +25,17 @@ function sendEmail(event) {
     .then(data => {
         btn.disabled = false;
         if (data.message) {
+            closeModal('resetPasswordModal');
             showAlert('alertPlaceholder', 'success', data.message || ' გთხოვთ შეამოწმოთ ელ.ფოსტა, ვერიფიკაციის ლინკი გამოგზავნილია.');
-            // Close the modal 
-                closeModal('resetPasswordModal');
+            modalForm.reset();
         } else {
-            showAlert('forgetAlertDiv', 'danger', data.error || ' გაუმართავი ელ.ფოსტა.');
+            showAlert('alertPlaceholder', 'danger', data.error || ' გაუმართავი ელ.ფოსტა.');
 
         }
     })
     .catch(error => {
         console.error('Error:', error);
+        showAlert('alertPlaceholder', 'danger', 'მოთხოვნა ჩავარდა. სცადეთ თავიდან.');
         btn.disabled = false;
     });
 }
