@@ -202,7 +202,43 @@ function getPermissions(){
     return decodedPermissions;
 }
 
+function initPasswordToggle({
+    fieldIds = [],
+    toggleSelector = '.togglePassword',
+    imgSelector = '.togglePasswordImg',
+    eyeViewPath = '/static/img/eye-view.svg',
+    eyeHidePath = '/static/img/eye-hide.svg'
+} = {}) {
+    const toggleButtons = document.querySelectorAll(toggleSelector);
+    const toggleImages = document.querySelectorAll(imgSelector);
+    const passwordFields = fieldIds
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
+
+    if (!toggleButtons.length || !passwordFields.length) {
+        return;
+    }
+
+    const setVisibility = (isVisible) => {
+        const targetType = isVisible ? 'text' : 'password';
+        passwordFields.forEach((field) => field.setAttribute('type', targetType));
+        toggleImages.forEach((img) => {
+            img.src = isVisible ? eyeViewPath : eyeHidePath;
+        });
+    };
+
+    const onToggle = () => {
+        const isCurrentlyHidden = passwordFields[0].getAttribute('type') === 'password';
+        setVisibility(isCurrentlyHidden);
+    };
+
+    toggleButtons.forEach((button) => {
+        button.addEventListener('click', onToggle);
+    });
+}
+
 window.showConfirmModal = showConfirmModal;
+window.initPasswordToggle = initPasswordToggle;
 
 
 // The DOMContentLoaded event listener

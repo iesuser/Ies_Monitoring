@@ -1,0 +1,59 @@
+<div class="card h-100 w-100 filterDiv">
+  <div class="card-header fw-semibold py-2">მიწისძვრების ფილტრი</div>
+  <div class="card-body py-2">
+    <form id="eventFilterForm" class="event-filter-form d-flex flex-column h-100" onsubmit="return filterEventForm(event)">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-sm-6">
+          <label for="filterEventId" class="form-label small mb-1">Event ID</label>
+          <input id="filterEventId" name="event_id" type="number" class="form-control form-control-sm" placeholder="მაგ: 555188">
+        </div>
+        <div class="col-12 col-sm-6">
+          <label for="filterSeiscompOid" class="form-label small mb-1">SeisComP OID</label>
+          <input id="filterSeiscompOid" name="seiscomp_oid" type="text" class="form-control form-control-sm" placeholder="OID">
+        </div>
+        <div class="col-12 col-sm-6">
+          <label for="filterRegion" class="form-label small mb-1">რეგიონი</label>
+          <input id="filterRegion" name="region" type="text" class="form-control form-control-sm" placeholder="რეგიონის სახელი">
+        </div>
+        <div class="col-12 col-sm-6">
+          <label for="filterArea" class="form-label small mb-1">Area</label>
+          <select id="filterArea" name="area" class="form-select form-select-sm">
+            <option value="">ყველა</option>
+            <option value="local">local</option>
+            <option value="regional">regional</option>
+            <option value="teleseismic">teleseismic</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label for="filterMlMin" class="form-label small mb-1">ML მინ</label>
+          <input id="filterMlMin" name="ml_min" type="number" step="any" class="form-control form-control-sm">
+        </div>
+        <div class="col-6">
+          <label for="filterMlMax" class="form-label small mb-1">ML მაქს</label>
+          <input id="filterMlMax" name="ml_max" type="number" step="any" class="form-control form-control-sm">
+        </div>
+        <div class="col-6">
+          <label for="filterDepthMin" class="form-label small mb-1">Depth მინ</label>
+          <input id="filterDepthMin" name="depth_min" type="number" step="any" class="form-control form-control-sm">
+        </div>
+        <div class="col-6">
+          <label for="filterDepthMax" class="form-label small mb-1">Depth მაქს</label>
+          <input id="filterDepthMax" name="depth_max" type="number" step="any" class="form-control form-control-sm">
+        </div>
+        <div class="col-12 col-sm-6">
+          <label for="filterStartTime" class="form-label small mb-1">თარიღი (დან)</label>
+          <input id="filterStartTime" name="start_time" type="date" class="form-control form-control-sm">
+        </div>
+        <div class="col-12 col-sm-6">
+          <label for="filterEndTime" class="form-label small mb-1">თარიღი (მდე)</label>
+          <input id="filterEndTime" name="end_time" type="date" class="form-control form-control-sm">
+        </div>
+      </div>
+
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-auto pt-3 text-center">
+        <button type="submit" class="btn btn-sm btn-primary">გაფილტვრა</button>
+        <button type="button" id="resetEventFiltersBtn" class="btn btn-sm btn-outline-secondary">გასუფთავება</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,66 +1,73 @@
-<div class="card shadow-sm mb-4">
-  <div class="card-header fw-semibold">მიწისძვრის დამატება</div>
-  <div class="card-body">
-    <form id="addEventForm" class="row g-3">
-      <div class="col-md-6">
-        <label for="eventIdInput" class="form-label">Event ID *</label>
-        <input id="eventIdInput" type="number" class="form-control" required>
+<div class="modal fade" id="createEventModal" tabindex="-1" aria-labelledby="createEventModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createEventModalLabel">მიწისძვრის დამატება</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="col-md-6">
-        <label for="seiscompOidInput" class="form-label">SeisComP OID *</label>
-        <input id="seiscompOidInput" type="text" class="form-control" required>
+      <div class="modal-body">
+        <form id="addEventForm" class="row g-3">
+          <div class="col-md-6">
+            <label for="eventIdInput" class="form-label">Event ID *</label>
+            <input id="eventIdInput" type="number" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label for="seiscompOidInput" class="form-label">SeisComP OID *</label>
+            <input id="seiscompOidInput" type="text" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label for="originTimeInput" class="form-label">Origin Time (ISO 8601) *</label>
+            <input
+              id="originTimeInput"
+              type="text"
+              class="form-control"
+              placeholder="2024-07-22T08:08:09.660000"
+              required
+            >
+          </div>
+          <div class="col-md-6">
+            <label for="originMsecInput" class="form-label">Origin msec</label>
+            <input id="originMsecInput" type="number" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <label for="latitudeInput" class="form-label">Latitude *</label>
+            <input id="latitudeInput" type="number" step="any" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label for="longitudeInput" class="form-label">Longitude *</label>
+            <input id="longitudeInput" type="number" step="any" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label for="depthInput" class="form-label">Depth (km) *</label>
+            <input id="depthInput" type="number" step="any" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label for="mlInput" class="form-label">Magnitude (ML) *</label>
+            <input id="mlInput" type="number" step="any" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label for="regionGeInput" class="form-label">Region GE</label>
+            <input id="regionGeInput" type="text" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label for="regionEnInput" class="form-label">Region EN</label>
+            <input id="regionEnInput" type="text" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label for="areaInput" class="form-label">Area</label>
+            <select id="areaInput" class="form-select">
+              <option value="">აირჩიე</option>
+              <option value="local">local</option>
+              <option value="regional">regional</option>
+              <option value="teleseismic">teleseismic</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <button id="addEventSubmitBtn" type="submit" class="btn btn-primary">დამატება</button>
+          </div>
+        </form>
+        <div id="addEventStatus" class="small mt-3 text-muted"></div>
       </div>
-      <div class="col-md-6">
-        <label for="originTimeInput" class="form-label">Origin Time (ISO 8601) *</label>
-        <input
-          id="originTimeInput"
-          type="text"
-          class="form-control"
-          placeholder="2024-07-22T08:08:09.660000"
-          required
-        >
-      </div>
-      <div class="col-md-6">
-        <label for="originMsecInput" class="form-label">Origin msec</label>
-        <input id="originMsecInput" type="number" class="form-control">
-      </div>
-      <div class="col-md-6">
-        <label for="latitudeInput" class="form-label">Latitude *</label>
-        <input id="latitudeInput" type="number" step="any" class="form-control" required>
-      </div>
-      <div class="col-md-6">
-        <label for="longitudeInput" class="form-label">Longitude *</label>
-        <input id="longitudeInput" type="number" step="any" class="form-control" required>
-      </div>
-      <div class="col-md-6">
-        <label for="depthInput" class="form-label">Depth (km) *</label>
-        <input id="depthInput" type="number" step="any" class="form-control" required>
-      </div>
-      <div class="col-md-6">
-        <label for="mlInput" class="form-label">Magnitude (ML) *</label>
-        <input id="mlInput" type="number" step="any" class="form-control" required>
-      </div>
-      <div class="col-md-4">
-        <label for="regionGeInput" class="form-label">Region GE</label>
-        <input id="regionGeInput" type="text" class="form-control">
-      </div>
-      <div class="col-md-4">
-        <label for="regionEnInput" class="form-label">Region EN</label>
-        <input id="regionEnInput" type="text" class="form-control">
-      </div>
-      <div class="col-md-4">
-        <label for="areaInput" class="form-label">Area</label>
-        <select id="areaInput" class="form-select">
-          <option value="">აირჩიე</option>
-          <option value="local">local</option>
-          <option value="regional">regional</option>
-          <option value="teleseismic">teleseismic</option>
-        </select>
-      </div>
-      <div class="col-12">
-        <button id="addEventSubmitBtn" type="submit" class="btn btn-primary">დამატება</button>
-      </div>
-    </form>
-    <div id="addEventStatus" class="small mt-3 text-muted"></div>
+    </div>
   </div>
 </div>

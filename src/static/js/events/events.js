@@ -85,6 +85,13 @@ function renderEvents(events) {
   eventsStatus.textContent = `ჩაიტვირთა ${sortedEvents.length} მიწისძვრა.`;
 }
 
+function renderEventsAndMap(events) {
+  renderEvents(events);
+  if (typeof window.updateMapMarkers === "function") {
+    window.updateMapMarkers(Array.isArray(events) ? events : []);
+  }
+}
+
 async function loadEvents() {
   eventsStatus.textContent = "მიწისძვრები იტვირთება...";
 
@@ -101,7 +108,7 @@ async function loadEvents() {
       return;
     }
 
-    renderEvents(payload);
+    renderEventsAndMap(Array.isArray(payload) ? payload : []);
   } catch {
     eventsTableBody.innerHTML = "";
     eventsStatus.textContent = "მოთხოვნა ჩავარდა მიწისძვრების ჩატვირთვისას.";
@@ -109,6 +116,8 @@ async function loadEvents() {
 }
 window.escapeHtml = escapeHtml;
 window.getApiKey = getApiKey;
+window.renderEvents = renderEvents;
+window.renderEventsAndMap = renderEventsAndMap;
 window.loadEvents = loadEvents;
 
 document.addEventListener("DOMContentLoaded", loadEvents);
