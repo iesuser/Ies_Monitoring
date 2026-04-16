@@ -18,7 +18,7 @@ EarthQuakeWatch | Events
     </div>
   </div>
 </div>
-<div class="container-fluid container-lg py-2">
+<div class="container-fluid container-lg">
   <div class="d-flex justify-content-end bg-white border rounded-3 shadow-sm p-2">
     <button
       type="button"
@@ -34,13 +34,13 @@ EarthQuakeWatch | Events
 
 {% include "createEvent.html" %}
 
-<div class="container-fluid container-lg py-3 py-md-4">
+<div class="container-fluid container-lg py-2 py-md-2">
   <div class="card shadow-sm">
     <div class="card-header fw-semibold">მიწისძვრების სია</div>
     <div class="card-body">
       <div id="eventsStatus" class="text-muted mb-3">იტვირთება...</div>
-      <div class="table-responsive">
-        <table class="table table-sm table-hover align-middle mb-0 text-nowrap text-center">
+      <div class="table-responsive events-table-scroll">
+        <table class="table table-sm table-hover align-middle mb-0 text-nowrap text-center events-table">
           <thead>
             <tr>
               <th>Action</th>

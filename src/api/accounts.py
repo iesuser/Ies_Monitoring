@@ -5,6 +5,7 @@ from flask import request
 from src.models import User, Role
 from src.api.nsmodels import accounts_ns, user_model, user_parser, accounts_model, accounts_parser, roles_model, roles_parser, password_reset_parser, request_password_reset_parser, change_password_parser
 from src.services import mail, url_serializer
+from src.services import validate_password
 
 from datetime import datetime, timedelta
 
@@ -278,10 +279,12 @@ class ResetPassword(Resource):
         
         if args.get('password') != args.get("retype_password"):
             return {"error": "პაროლები არ ემთხვევა."}, 400
-        
-        if len(args.get("password")) < 8:
-            return {"error": "პაროლი უნდა იყოს მინიმუმ 8 სიმბოლო."}, 400
-        
+
+        try:
+            validate_password(args.get("password"))
+        except ValueError as err:
+            return {"error": str(err)}, 400
+
 
         password = args.get('password')
         try:
@@ -310,8 +313,10 @@ class ChangePassword(Resource):
         if args.get('password') != args.get("retype_password"):
             return {"error": "პაროლები არ ემთხვევა."}, 400
 
-        if len(args.get("password")) < 8:
-            return {"error": "პაროლი უნდა იყოს მინიმუმ 8 სიმბოლო."}, 400
+        try:
+            validate_password(args.get("password"))
+        except ValueError as err:
+            return {"error": str(err)}, 400
 
         if not user.check_password(args.get("current_password")):
             return {"error": "ძველი პაროლი არასწორია."}, 400

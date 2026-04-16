@@ -3,6 +3,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
 
 from src.models import User, Role
 from src.api.nsmodels import auth_ns, registration_parser, auth_parser
+from src.services import validate_password
 
 
 @auth_ns.route('/registration')
@@ -23,9 +24,11 @@ class RegistrationApi(Resource):
         # Validate password length and pattern
         if args["password"] != args["passwordRepeat"]:
             return {"error": "პაროლები არ ემთხვევა."}, 400
-        
-        if len(args["password"]) < 8:
-            return {"error": "პაროლი უნდა იყოს მინიმუმ 8 სიმბოლო."}, 400
+
+        try:
+            validate_password(args["password"])
+        except ValueError as err:
+            return {"error": str(err)}, 400
 
         if User.query.filter_by(email=args["email"]).first():
             return {"error": "ელ.ფოსტის მისამართი უკვე რეგისტრირებულია."}, 400

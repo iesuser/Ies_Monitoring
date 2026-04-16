@@ -40,3 +40,6 @@ function submitChangePassword(event) {
 }
 
 document.getElementById('changePasswordForm').onsubmit = submitChangePassword;
+window.initPasswordToggle?.({
+    fieldIds: ['currentPassword', 'password', 'retypePassword']
+});

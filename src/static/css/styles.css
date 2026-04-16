@@ -46,6 +46,16 @@ body {
     border-radius: 5px;
 }
 
+.events-table-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.events-table {
+    min-width: 980px;
+}
+
 @media (min-width: 1200px) {
     .events-map-card #map {
         min-height: 430px;

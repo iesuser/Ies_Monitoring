@@ -1,93 +1,92 @@
-// Send POST request for filter event
+const eventFilterFormElement = document.getElementById("eventFilterForm");
+const resetEventFiltersBtn = document.getElementById("resetEventFiltersBtn");
+const filterStatus = document.getElementById("eventsStatus");
+
+function buildFilterQuery() {
+    const params = new URLSearchParams();
+
+    const eventId = document.getElementById("filterEventId")?.value.trim();
+    const seiscompOid = document.getElementById("filterSeiscompOid")?.value.trim();
+    const region = document.getElementById("filterRegion")?.value.trim();
+    const area = document.getElementById("filterArea")?.value.trim();
+    const mlMin = document.getElementById("filterMlMin")?.value.trim();
+    const mlMax = document.getElementById("filterMlMax")?.value.trim();
+    const depthMin = document.getElementById("filterDepthMin")?.value.trim();
+    const depthMax = document.getElementById("filterDepthMax")?.value.trim();
+    const startTime = document.getElementById("filterStartTime")?.value.trim();
+    const endTime = document.getElementById("filterEndTime")?.value.trim();
+
+    if (eventId) params.set("event_id", eventId);
+    if (seiscompOid) params.set("seiscomp_oid", seiscompOid);
+    if (region) params.set("region", region);
+    if (area) params.set("area", area);
+    if (mlMin) params.set("ml_min", mlMin);
+    if (mlMax) params.set("ml_max", mlMax);
+    if (depthMin) params.set("depth_min", depthMin);
+    if (depthMax) params.set("depth_max", depthMax);
+    if (startTime) params.set("start_time", startTime);
+    if (endTime) params.set("end_time", endTime);
+
+    return params.toString();
+}
+
 function filterEventForm(event) {
-    event.preventDefault(); // Prevent default form submission
+    if (event && typeof event.preventDefault === "function") {
+        event.preventDefault();
+    }
 
-    const form = document.getElementById('eventFilterForm');
-    const formData = new FormData(form);
+    if (filterStatus) {
+        filterStatus.textContent = "ფილტრაცია მიმდინარეობს...";
+    }
 
-    // Retrieve JWT token
-    const token = localStorage.getItem('access_token');
-    console.log("filter formData:", Object.fromEntries(formData.entries()));
+    const query = buildFilterQuery();
+    const url = query ? `/api/filter_event?${query}` : "/api/filter_event";
 
-    // makeApiRequest is a utility function defined elsewhere
-    makeApiRequest('/api/filter_event', {
-        method: 'POST',
+    makeApiRequest(url, {
+        method: "POST",
         headers: {
-            'Authorization': `Bearer ${token}` // Include JWT token in the Authorization header
+            accept: "application/json",
         },
-        body: formData
     })
-    .then(data => {
-        if (!Array.isArray(data) || data.length === 0) {
-            eventTableBody.innerHTML = "";
-            eventStatus.textContent = "ივენთები ვერ მოიძებნა.";
+    .then((data) => {
+        if (!Array.isArray(data)) {
+            if (window.renderEventsAndMap) window.renderEventsAndMap([]);
+            if (filterStatus) {
+                filterStatus.textContent = data?.error || "ფილტრაცია ვერ შესრულდა.";
+            }
             return;
-          }
-        // Clear old project table data
-        const eventsTableBody = document.getElementById('eventsTableBody');
-        eventsTableBody.innerHTML = ''; // Clear previous data
+        }
 
-        const sortedEvents = [...data].sort((a, b) => {
-            const aTime = new Date(a.origin_time || 0).getTime();
-            const bTime = new Date(b.origin_time || 0).getTime();
-            return bTime - aTime;
-        });
-        console.log(sortedEvents);
-        window.eventsById.clear();
-        sortedEvents.forEach((event) => window.eventsById.set(String(event.event_id), event));
-        window.eventsById = window.eventsById;
-        
-        eventsTableBody.innerHTML = sortedEvents
-            .map(
-              (event) => `
-              <tr>
-                <td>
-                  <div class="d-flex align-items-center gap-1">
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-outline-secondary edit-event-btn d-inline-flex align-items-center justify-content-center"
-                      onclick="openEditEventModal('${escapeHtml(event.event_id)}')"
-                      title="ივენთის რედაქტირება"
-                      aria-label="ივენთის რედაქტირება"
-                    >
-                      <img
-                        src="/static/img/pen-solid.svg"
-                        alt="რედაქტირება"
-                        style="width: 14px; height: 14px;"
-                      >
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
-                      onclick="deleteEvent('${escapeHtml(event.event_id)}')"
-                      title="ივენთის წაშლა"
-                      aria-label="ივენთის წაშლა"
-                    >
-                      <img
-                        src="/static/img/trash-solid.svg"
-                        alt="წაშლა"
-                        style="width: 14px; height: 14px;"
-                      >
-                    </button>
-                  </div>
-                </td>
-                <td>${escapeHtml(event.event_id)}</td>
-                <td>${escapeHtml(event.seiscomp_oid)}</td>
-                <td>${escapeHtml(event.origin_time)}</td>
-                <td>${escapeHtml(event.ml)}</td>
-                <td>${escapeHtml(event.depth)}</td>
-                <td>${escapeHtml(event.latitude)}</td>
-                <td>${escapeHtml(event.longitude)}</td>
-                <td>${escapeHtml(event.region_ge || event.region_en || event.area || "-")}</td>
-              </tr>
-            `
-            )
-            .join("");
-        
-          eventsStatus.textContent = `ჩაიტვირთა ${sortedEvents.length} მიწისძვრა.`;
+        if (window.renderEventsAndMap) {
+            window.renderEventsAndMap(data);
+        }
+
+        if (filterStatus) {
+            filterStatus.textContent = `გაფილტრულია ${data.length} მიწისძვრა.`;
+        }
     })
-    .catch(error => {
-        console.error('Error fetching project data:', error);
+    .catch((error) => {
+        console.error("Error fetching filtered events:", error);
+        if (window.renderEventsAndMap) window.renderEventsAndMap([]);
+        if (filterStatus) {
+            filterStatus.textContent = "ფილტრაციის მოთხოვნა ჩავარდა.";
+        }
     });
 
+    return false;
+}
+
+window.filterEventForm = filterEventForm;
+
+if (eventFilterFormElement) {
+    eventFilterFormElement.addEventListener("submit", filterEventForm);
+}
+
+if (resetEventFiltersBtn) {
+    resetEventFiltersBtn.addEventListener("click", async () => {
+        eventFilterFormElement.reset();
+        if (window.loadEvents) {
+            await window.loadEvents();
+        }
+    });
 }
