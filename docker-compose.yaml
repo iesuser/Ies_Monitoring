@@ -26,21 +26,6 @@ services:
     deploy:
       replicas: 2
 
-  # Nginx სერვისი, რომელიც მოქმედებს როგორც ლოუდ ბალანსერი და რევერს-პროსი.
-  nginx:
-    image: nginx:1.27.0-alpine # ოფიციალური NGINX იმიჯის ვერსია Docker Hub-დან
-    ports:
-      - "2021:80" # HTTP Port
-      - "2022:443"  # HTTPS პორტი
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # NGINX კონფიგურაციის ფაილი
-      - ./nginx/certs:/etc/nginx/certs:ro            # SSL სერთიფიკატები
-    restart: always  # კონტეინერი ავტომატურად გადატვირთოს, თუ გათიშულია.
-    depends_on:
-      - flask  # NGINX ელოდება, სანამ Flask სერვერი ჩაირთვება.
-    networks:
-      - net  # NGINX და Flask კონტეინერები საერთო ქსელში არიან.
-
   # MySQL მონაცემთა ბაზის სერვისი
   db:
     image: mysql:8.2.0-alpine # ოფიციალური MySQL 8.2.0 იმიჯი Docker Hub-დან

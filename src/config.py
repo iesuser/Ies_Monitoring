@@ -9,7 +9,7 @@ load_dotenv(dotenv_path='./env')  # Adjust the path if needed
 
 class Config:
     # Flask secret key
-    SECRET_KEY = os.getenv('SECRET_KEY', 'default_secret_key')
+    MY_SECRET_KEY = os.getenv('MY_SECRET_KEY', 'default_secret_key')
     # Base directory
     BASE_DIR = path.abspath(path.dirname(__file__) + sep + pardir)
     # Templates
@@ -54,6 +54,7 @@ class Config:
     MAIL_PORT = os.getenv('MAIL_PORT', 587)
     MAIL_USERNAME = os.getenv('MAIL_USERNAME', 'your_email@gmail.com')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', 'your_password')
+    
 
 class TestConfig(Config):
 
