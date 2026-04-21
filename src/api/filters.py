@@ -1,3 +1,5 @@
+import logging
+
 from flask_restx import Resource
 from datetime import datetime
 from flask_jwt_extended import jwt_required
@@ -5,6 +7,8 @@ from sqlalchemy import and_
 
 from src.api.nsmodels import filter_ns, filter_parser, filter_model
 from src.models import SeismicEvent
+
+logger = logging.getLogger("app.api")
 
 
 @filter_ns.route('/filter_event')
@@ -16,10 +20,10 @@ class FilterEventAPI(Resource):
     @filter_ns.marshal_list_with(filter_model)
     def post(self):
         '''გავფილტროთ მიწისძვრები სხვადასხვა პარამეტრებით'''
-        # Parse the filter arguments
+        # ვამუშავებთ ფილტრის პარამეტრებს.
         args = filter_parser.parse_args()
 
-        # Extract filter parameters
+        # ცვლადებში ვანაწილებთ ფილტრის მნიშვნელობებს.
         event_id = args.get("event_id")
         seiscomp_oid = args.get("seiscomp_oid")
         region = args.get("region")
@@ -33,19 +37,19 @@ class FilterEventAPI(Resource):
 
         event_query = SeismicEvent.query
 
-        # Apply event ID filter if provided
+        # event_id-ის ფილტრი (თუ გადმოიცა)
         if event_id:
             event_query = event_query.filter(SeismicEvent.event_id == event_id)
         
-        # Apply seiscomp OID filter if provided
+        # seiscomp_oid-ის ფილტრი (თუ გადმოიცა)
         if seiscomp_oid:
             event_query = event_query.filter(SeismicEvent.seiscomp_oid.like(f"%{seiscomp_oid}%"))
 
-        # Apply region filter if provided
+        # რეგიონის ფილტრი (თუ გადმოიცა)
         if region:
             event_query = event_query.filter(SeismicEvent.region_ge.like(f"%{region}%"))
 
-        # Apply origin time range filter only if both start_time and end_time are provided
+        # origin_time დიაპაზონის ფილტრი (start/end მნიშვნელობების მიხედვით)
         if start_time and not end_time:
             event_query = event_query.filter(SeismicEvent.origin_time >= start_time)
         elif end_time and not start_time:
@@ -58,11 +62,11 @@ class FilterEventAPI(Resource):
                 )
             )
 
-        # Apply area filter if provided
+        # area-ის ფილტრი (თუ გადმოიცა)
         if area:
             event_query = event_query.filter(SeismicEvent.area == area)
 
-        # Apply depth range filter if provided
+        # სიღრმის დიაპაზონის ფილტრი (თუ გადმოიცა)
         if depth_min and depth_max:
             event_query = event_query.filter(
                 SeismicEvent.depth.between(depth_min, depth_max)
@@ -72,7 +76,7 @@ class FilterEventAPI(Resource):
         elif depth_max:
             event_query = event_query.filter(SeismicEvent.depth <= depth_max)
 
-        # Apply ML range filter if provided
+        # ML დიაპაზონის ფილტრი (თუ გადმოიცა)
         if ml_min and ml_max:
             event_query = event_query.filter(
                 SeismicEvent.ml.between(ml_min, ml_max)
@@ -82,12 +86,17 @@ class FilterEventAPI(Resource):
         elif ml_max:
             event_query = event_query.filter(SeismicEvent.ml <= ml_max)
 
-        # Get the filtered events
+        # ვიღებთ გაფილტრულ მოვლენებს.
         filtered_events = event_query.all()
 
-        # Add calculated fields to each event
+        # თითოეულ მოვლენაზე shakemap_calculated ველისთვის bool მნიშვნელობას ვინარჩუნებთ.
         for event in filtered_events:
             event.shakemap_calculated = True if event.shakemap_calculated else False
 
-        # Return the filtered events
+        logger.info(
+            "Filter events success: result_count=%s filters=%s",
+            len(filtered_events),
+            {k: v for k, v in args.items() if v not in (None, "")},
+        )
+        # ვაბრუნებთ გაფილტრულ შედეგს.
         return filtered_events, 200

@@ -1,4 +1,5 @@
 import os
+import logging
 
 from flask_restx import Resource
 from flask import request, send_file
@@ -10,16 +11,18 @@ from src.workers.run_shakemap import run_shakemap_worker
 from src.config import Config
 
 SHAKEMAP_BASE_PATH = Config.SHAKEMAP_BASE_PATH
-# Allowed images
+# დაშვებული სურათების ტიპები
 ALLOWED_IMAGES = {
     "pga": "pga.jpg",
     "intensity": "intensity.jpg",
     "pgv": "pgv.jpg",
 }
 
+logger = logging.getLogger("app.shakemap")
+
 
 def get_products_path(seiscomp_oid, event_id=None):
-    """Resolve products path by OID first, then numeric event_id."""
+    """products ბილიკს ჯერ OID-ით ეძებს, შემდეგ რიცხვითი event_id-ით."""
     candidates = [
         f"{SHAKEMAP_BASE_PATH}/{seiscomp_oid}/current/products" if seiscomp_oid else None
     ]
@@ -45,12 +48,12 @@ def get_products_path(seiscomp_oid, event_id=None):
 class RunShakeMap(Resource):
     @staticmethod
     def _is_authorized():
-        # 1) Internal service auth via API key
+        # 1) შიდა სერვისის ავტორიზაცია API key-ით
         api_key = request.headers.get('X-API-Key')
         if api_key and api_key == Config.API_KEY:
             return True
 
-        # 2) User auth via JWT Bearer token
+        # 2) მომხმარებლის ავტორიზაცია JWT Bearer ტოკენით
         try:
             verify_jwt_in_request()
             identity = get_jwt_identity()
@@ -61,20 +64,22 @@ class RunShakeMap(Resource):
     @shakemap_ns.expect(shakemap_model)
     @shakemap_ns.doc(
         security=[{'ApiKeyAuth': []}, {'JsonWebToken': []}],
-        description='Trigger ShakeMap by using either X-API-Key or JWT Bearer token'
+        description='ShakeMap-ის გაშვება X-API-Key-ით ან JWT Bearer ტოკენით'
     )
     def post(self):
-        # --- Parse request body ---
+        # --- მოთხოვნის body-ის დამუშავება ---
         args = shakemap_parser.parse_args()
         seiscomp_oid = args["seiscomp_oid"]
-        # --- Auth check ---
+        # --- ავტორიზაციის შემოწმება ---
         if not self._is_authorized():
+            logger.warning("ShakeMap run denied: seiscomp_oid=%s unauthorized", seiscomp_oid)
             return {'error': 'Unauthorized - provide valid X-API-Key or JWT token'}, 401
 
         try:
-            # --- Get event by seiscomp_oid ---
+            # --- მოვლენის მოძებნა seiscomp_oid-ით ---
             event = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
             if not event:
+                logger.info("ShakeMap run failed: seiscomp_oid=%s not found", seiscomp_oid)
                 return {"error": f"Event {seiscomp_oid} not found"}, 404
 
             parsed_data = {
@@ -87,17 +92,24 @@ class RunShakeMap(Resource):
                 "desc": event.region_ge or "Event Description"
             }
 
-            # --- Run ShakeMap worker ---
+            # --- ShakeMap worker-ის გაშვება ---
             result = run_shakemap_worker(parsed_data)
-            # --- Update event shakemap_calculated status ---
+            # --- მოვლენის shakemap_calculated სტატუსის განახლება ---
             event.shakemap_calculated = True
-            # --- Save event ---
+            # --- მოვლენის შენახვა ---
             event.save()
-            # --- Return result ---
+            logger.info(
+                "ShakeMap run success: seiscomp_oid=%s event_id=%s",
+                seiscomp_oid,
+                event.event_id,
+            )
+            # --- შედეგის დაბრუნება ---
             return result, 200
         except ValueError as e:
+            logger.info("ShakeMap run failed: seiscomp_oid=%s value error=%s", seiscomp_oid, e)
             return {"error": str(e)}, 404
         except Exception as e:
+            logger.exception("ShakeMap run exception: seiscomp_oid=%s", seiscomp_oid)
             return {
                 "status": "failed",
                 "event_id": seiscomp_oid,
@@ -105,7 +117,7 @@ class RunShakeMap(Resource):
             }, 500
 
 
-# --- ShakeMap results ---
+# --- ShakeMap შედეგები ---
 @shakemap_ns.route("/shakemap/<string:seiscomp_oid>")
 @shakemap_ns.doc(
     params={
@@ -119,9 +131,10 @@ class RunShakeMap(Resource):
 )
 class ShakeMapResults(Resource):
     def get(self, seiscomp_oid):
-        """Return ShakeMap products for an event."""
+        """აბრუნებს კონკრეტული მოვლენის ShakeMap პროდუქტებს."""
         event = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
         if not event:
+            logger.info("ShakeMap results failed: seiscomp_oid=%s not found", seiscomp_oid)
             return {"error": f"Event {seiscomp_oid} not found"}, 404
 
         products_path = get_products_path(seiscomp_oid, event.event_id)
@@ -159,18 +172,34 @@ class ShakeMapResults(Resource):
 )
 class ShakeMapResultImage(Resource):
     def get(self, seiscomp_oid, image_type):
-        """Return a ShakeMap image file by SeisComP OID."""
+        """აბრუნებს ShakeMap სურათს SeisComP OID-ის მიხედვით."""
         event = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
         if not event:
+            logger.info("ShakeMap image failed: seiscomp_oid=%s event not found", seiscomp_oid)
             return {"error": f"Event {seiscomp_oid} not found"}, 404
 
         filename = ALLOWED_IMAGES.get(image_type)
         if not filename:
+            logger.info(
+                "ShakeMap image failed: seiscomp_oid=%s unsupported image_type=%s",
+                seiscomp_oid,
+                image_type,
+            )
             return {"error": f"Unsupported image type: {image_type}"}, 400
 
         products_path = get_products_path(seiscomp_oid, event.event_id)
         file_path = os.path.join(products_path, filename)
         if not os.path.exists(file_path):
+            logger.info(
+                "ShakeMap image failed: seiscomp_oid=%s missing file=%s",
+                seiscomp_oid,
+                filename,
+            )
             return {"error": f"Image not found: {filename}"}, 404
 
+        logger.info(
+            "ShakeMap image success: seiscomp_oid=%s image_type=%s",
+            seiscomp_oid,
+            image_type,
+        )
         return send_file(file_path, mimetype="image/jpeg")

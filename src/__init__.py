@@ -4,6 +4,7 @@ from flask_cors import CORS
 from src.config import Config
 from src.commands import init_db, populate_db
 from src.extensions import db, migrate, jwt, api as restx_api
+from src.logging_config import configure_logging
 from src.models import User
 from src.views import shakemap_blueprint, auth_blueprint, accounts_blueprint, events_blueprint
 from src import api as api_package # ensure namespaces are imported
@@ -17,6 +18,7 @@ def create_app(config=Config):
     app = Flask(__name__)
     CORS(app)
     app.config.from_object(config)
+    configure_logging(app)
 
     @app.route("/")
     def home():
@@ -76,3 +78,8 @@ def register_error_handlers(app):
     def page_not_found(e):
         # You can return a JSON response or render a custom HTML template
         return render_template("404.html"), 404
+
+    @app.errorhandler(500)
+    def server_error(error):
+        app.logger.exception('An exception occurred during a request.')
+        return render_template("500.html"), 500

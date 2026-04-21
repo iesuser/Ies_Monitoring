@@ -1,3 +1,5 @@
+import logging
+
 from flask_restx import Resource
 from flask import request
 import datetime
@@ -5,6 +7,8 @@ import datetime
 from src.api.nsmodels import event_ns, event_model, event_parser
 from src.models import SeismicEvent
 from src.config import Config
+
+logger = logging.getLogger("app.events")
 
 @event_ns.route('/events')
 @event_ns.doc(
@@ -17,39 +21,46 @@ from src.config import Config
     }
 )
 class SeismicListAPI(Resource):
-    @event_ns.marshal_list_with(event_model)  # show schema in Swagger
+    @event_ns.marshal_list_with(event_model)  # Swagger-ში სქემის საჩვენებლად
     def get(self):
-        """List all seismic events"""
+        """აბრუნებს მიწისძვრების სრულ სიას."""
         events = SeismicEvent.query.all()
         if not events:
+            logger.info("Events list: no records found")
             return {"error": "მიწისძვრები არ მოიძებნა."}, 404
 
+        logger.info("Events list success: count=%s", len(events))
         return events
 
     @event_ns.expect(event_model)
     @event_ns.doc(security='ApiKeyAuth', description='Create or update a seismic event (requires X-API-Key)')
     def post(self):
         """Create or update a seismic event (upsert, requires API key)"""
-        # --- Auth check ---
+        # --- ავტორიზაციის შემოწმება ---
         api_key = request.headers.get('X-API-Key')
         if api_key != Config.API_KEY:
+            logger.warning("Event upsert denied: invalid API key")
             return {'error': 'Unauthorized - Invalid API key'}, 401
 
-        # --- Parse request body ---
+        # --- მოთხოვნის body-ის დამუშავება ---
         args = event_parser.parse_args()
 
-        # --- Convert origin_time to datetime ---
+        # --- origin_time-ის datetime-ად გარდაქმნა ---
         try:
             origin_time = datetime.datetime.fromisoformat(args['origin_time'])
         except Exception:
+            logger.info(
+                "Event upsert failed: event_id=%s invalid origin_time format",
+                args.get("event_id"),
+            )
             return {
                 'error': 'Invalid origin_time format (use ISO 8601, e.g. 2025-10-24T12:20:00)'
             }, 400
 
-        # --- Check if event already exists ---
+        # --- ვამოწმებთ, არსებობს თუ არა უკვე ეს მოვლენა ---
         exist_event = SeismicEvent.query.filter_by(event_id=args['event_id']).first()
         if exist_event:
-            # -------- UPDATE EXISTING EVENT --------
+            # -------- არსებული მოვლენის განახლება --------
             exist_event.seiscomp_oid = args.get('seiscomp_oid')
             exist_event.origin_time = origin_time
             exist_event.origin_msec = args.get('origin_msec')
@@ -60,17 +71,18 @@ class SeismicListAPI(Resource):
             exist_event.region_en = args.get('region_en')
             exist_event.area = args.get('area')
             exist_event.ml = args.get('ml')
-            # Keep current flag unless caller explicitly sends it.
+            # მიმდინარე flag უცვლელი რჩება, თუ მომწოდებელმა კონკრეტულად არ გამოგზავნა.
             if args.get('shakemap_calculated') is not None:
                 exist_event.shakemap_calculated = args.get('shakemap_calculated')
 
             exist_event.save()
+            logger.info("Event updated: event_id=%s", exist_event.event_id)
             return {
                 'message': f'Seismic event {exist_event.event_id} updated successfully'
             }, 200
 
         else:
-            # -------- CREATE NEW EVENT --------
+            # -------- ახალი მოვლენის შექმნა --------
             new_event = SeismicEvent(
                 event_id=args['event_id'],
                 seiscomp_oid=args.get('seiscomp_oid'),
@@ -86,6 +98,7 @@ class SeismicListAPI(Resource):
                 shakemap_calculated=args.get('shakemap_calculated') or False
             )
             new_event.create()
+            logger.info("Event created: event_id=%s", new_event.event_id)
 
             return {
                 'message': f'Seismic event {new_event.event_id} created successfully'
@@ -103,14 +116,17 @@ class SeismicListAPI(Resource):
 class SeismicEventAPI(Resource):
     @event_ns.doc(security='ApiKeyAuth', description='Delete a seismic event by event_id (requires X-API-Key)')
     def delete(self, event_id):
-        """Delete seismic event by event_id (requires API key)"""
+        """შლის მიწისძვრის მოვლენას event_id-ით (საჭიროა API key)."""
         api_key = request.headers.get('X-API-Key')
         if api_key != Config.API_KEY:
+            logger.warning("Event delete denied: event_id=%s invalid API key", event_id)
             return {'error': 'Unauthorized - Invalid API key'}, 401
 
         event = SeismicEvent.query.filter_by(event_id=event_id).first()
         if not event:
+            logger.info("Event delete failed: event_id=%s not found", event_id)
             return {'error': f'Seismic event {event_id} not found'}, 404
 
         event.delete()
+        logger.info("Event deleted: event_id=%s", event_id)
         return {'message': f'Seismic event {event_id} deleted successfully'}, 200

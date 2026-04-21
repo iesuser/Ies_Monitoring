@@ -281,4 +281,6 @@ async function loadEvents() {
 }
 
 // საწყისი ჩატვირთვა.
+window.getApiKey = getApiKey;
+window.loadEvents = loadEvents;
 loadEvents();
