@@ -69,7 +69,8 @@ class Config:
     MAIL_PORT = os.getenv('MAIL_PORT', 587)
     MAIL_USERNAME = os.getenv('MAIL_USERNAME', 'your_email@gmail.com')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', 'your_password')
-    REDIS_URL = os.getenv('REDIS_URL', '')
+
+    GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', 'google_maps_api_key')
 
 class TestConfig(Config):
 

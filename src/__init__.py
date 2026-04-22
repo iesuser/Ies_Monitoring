@@ -24,6 +24,10 @@ def create_app(config=Config):
     def home():
         return render_template("index.html")
 
+    @app.context_processor
+    def inject_template_settings():
+        return {"google_maps_api_key": Config.GOOGLE_MAPS_API_KEY}
+
     register_extensions(app)
     register_blueprints(app)
     register_commands(app)
