@@ -19,19 +19,17 @@ class Config:
     # ShakeMap base path
     SHAKEMAP_BASE_PATH = os.getenv('SHAKEMAP_BASE_PATH', f'{os.getenv("HOME")}/shakemap_profiles/default/data')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    # Default: SQLite (local dev)
-    DEV_SQLALCHEMY_DATABASE_URI = f"sqlite:///{path.join(BASE_DIR, 'db.sqlite')}"
 
     # MySQL credentials
-    MYSQL_CONTAINER_NAME = os.getenv('MYSQL_CONTAINER_NAME', 'ies_monitoring_db')
     MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
-    MYSQL_ROOT_USER = os.getenv('MYSQL_ROOT_USER', 'root')
-    MYSQL_ROOT_PASSWORD = os.getenv('MYSQL_ROOT_PASSWORD', 'Ml_Root88')
     MYSQL_DATABASE = os.getenv('MYSQL_DATABASE', 'ies_monitoring')
+    DEV_MYSQL_DATABASE = os.getenv('DEV_MYSQL_DATABASE', 'ies_monitoring_dev')
     MYSQL_USER = os.getenv('MYSQL_USER', 'ies_monitoring')
     MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'Ml_Ies_monitoring88')
 
     PROD_SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DATABASE}"
+    DEV_SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{DEV_MYSQL_DATABASE}"
+
     SQLALCHEMY_DATABASE_URI = (
             os.getenv('PROD_SQLALCHEMY_DATABASE_URI', PROD_SQLALCHEMY_DATABASE_URI)
             if APP_ENV == "production"
