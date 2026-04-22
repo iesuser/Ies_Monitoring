@@ -40,7 +40,7 @@ class SeismicListAPI(Resource):
         api_key = request.headers.get('X-API-Key')
         if api_key != Config.API_KEY:
             logger.warning("Event upsert denied: invalid API key")
-            return {'error': 'Unauthorized - Invalid API key'}, 401
+            return {'error': 'არ გაქვს წვდომა - API გასაღები არასწორია'}, 401
 
         # --- მოთხოვნის body-ის დამუშავება ---
         args = event_parser.parse_args()
@@ -54,7 +54,7 @@ class SeismicListAPI(Resource):
                 args.get("event_id"),
             )
             return {
-                'error': 'Invalid origin_time format (use ISO 8601, e.g. 2025-10-24T12:20:00)'
+                'error': 'origin_time ფორმატი არასწორია (გამოიყენე ISO 8601, მაგ.: 2025-10-24T12:20:00)'
             }, 400
 
         # --- ვამოწმებთ, არსებობს თუ არა უკვე ეს მოვლენა ---
@@ -78,7 +78,7 @@ class SeismicListAPI(Resource):
             exist_event.save()
             logger.info("Event updated: event_id=%s", exist_event.event_id)
             return {
-                'message': f'Seismic event {exist_event.event_id} updated successfully'
+                'message': f'მიწისძვრის მოვლენა წარმატებით განახლდა: {exist_event.event_id}'
             }, 200
 
         else:
@@ -101,7 +101,7 @@ class SeismicListAPI(Resource):
             logger.info("Event created: event_id=%s", new_event.event_id)
 
             return {
-                'message': f'Seismic event {new_event.event_id} created successfully'
+                'message': f'მიწისძვრის მოვლენა წარმატებით დაემატა: {new_event.event_id}'
             }, 201
 
 
@@ -120,13 +120,13 @@ class SeismicEventAPI(Resource):
         api_key = request.headers.get('X-API-Key')
         if api_key != Config.API_KEY:
             logger.warning("Event delete denied: event_id=%s invalid API key", event_id)
-            return {'error': 'Unauthorized - Invalid API key'}, 401
+            return {'error': 'არ გაქვს წვდომა - API გასაღები არასწორია'}, 401
 
         event = SeismicEvent.query.filter_by(event_id=event_id).first()
         if not event:
             logger.info("Event delete failed: event_id=%s not found", event_id)
-            return {'error': f'Seismic event {event_id} not found'}, 404
+            return {'error': f'მიწისძვრის მოვლენა ვერ მოიძებნა: {event_id}'}, 404
 
         event.delete()
         logger.info("Event deleted: event_id=%s", event_id)
-        return {'message': f'Seismic event {event_id} deleted successfully'}, 200
+        return {'message': f'მიწისძვრის მოვლენა წარმატებით წაიშალა: {event_id}'}, 200

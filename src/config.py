@@ -8,7 +8,7 @@ from os import path, sep, pardir
 load_dotenv(dotenv_path='.env')  # Adjust the path if needed
 
 class Config:
-    APP_ENV = os.getenv('APP_ENV', 'development')
+    APP_ENV = os.getenv('APP_ENV', 'testing').strip().lower()
     # Flask secret key
     MY_SECRET_KEY = os.getenv('MY_SECRET_KEY', 'default_secret_key')
     # Base directory
@@ -27,22 +27,27 @@ class Config:
     MYSQL_USER = os.getenv('MYSQL_USER', 'ies_monitoring')
     MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'Ml_Ies_monitoring88')
 
-    PROD_SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DATABASE}"
-    DEV_SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{DEV_MYSQL_DATABASE}"
+    PROD_SQLALCHEMY_DATABASE_URI = os.getenv(
+        'PROD_SQLALCHEMY_DATABASE_URI',
+        f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DATABASE}",
+    )
+    DEV_SQLALCHEMY_DATABASE_URI = os.getenv(
+        'DEV_SQLALCHEMY_DATABASE_URI',
+        f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{DEV_MYSQL_DATABASE}",
+    )
+    TEST_SQLALCHEMY_DATABASE_URI = os.getenv(
+        'TEST_SQLALCHEMY_DATABASE_URI',
+        f"sqlite:///{path.join(BASE_DIR, 'db.sqlite')}",
+    )
 
-    SQLALCHEMY_DATABASE_URI = (
-            os.getenv('PROD_SQLALCHEMY_DATABASE_URI', PROD_SQLALCHEMY_DATABASE_URI)
-            if APP_ENV == "production"
-            else os.getenv('DEV_SQLALCHEMY_DATABASE_URI', DEV_SQLALCHEMY_DATABASE_URI)
-        )
-    
-    # Uncomment for production
-    # AWS_MYSQL_HOST = os.getenv('AWS_MYSQL_HOST', 'default_host')
-    # AWS_MYSQL_DATABASE = os.getenv('AWS_MYSQL_DATABASE', 'default_database')
-    # AWS_MYSQL_USER = os.getenv('AWS_MYSQL_USER', 'default_user')
-    # AWS_MYSQL_PASSWORD = os.getenv('AWS_MYSQL_PASSWORD', 'default_password')
-    # MySQL connection URI
-    # SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{AWS_MYSQL_USER}:{AWS_MYSQL_PASSWORD}@{AWS_MYSQL_HOST}/{AWS_MYSQL_DATABASE}'
+    if APP_ENV == "production":
+        SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI", PROD_SQLALCHEMY_DATABASE_URI)
+    elif APP_ENV == "development":
+        SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI", DEV_SQLALCHEMY_DATABASE_URI)
+    elif APP_ENV == "testing":
+        SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI", TEST_SQLALCHEMY_DATABASE_URI)
+    else:
+        raise ValueError(f"Invalid database configuration for environment: {APP_ENV}")
 
     API_KEY = os.getenv('API_KEY', 'default_api_key')
 

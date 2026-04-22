@@ -71,10 +71,15 @@ async function regenerateShakeMap(button) {
     return;
   }
 
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    eventsStatus.textContent = "API key აუცილებელია რეგენერაციისთვის.";
-    return;
+  const accessToken = window.localStorage.getItem("access_token");
+  let apiKey = null;
+  // თუ JWT ავტორიზაცია არსებობს, API key აღარ არის სავალდებულო.
+  if (!accessToken) {
+    apiKey = getApiKey();
+    if (!apiKey) {
+      eventsStatus.textContent = "რეგენერაციისთვის საჭიროა ავტორიზაცია ან API key.";
+      return;
+    }
   }
 
   button.disabled = true;
@@ -82,19 +87,37 @@ async function regenerateShakeMap(button) {
   eventsStatus.textContent = `ShakeMap გენერაცია დაიწყო (${seiscompOid})...`;
 
   try {
-    const response = await fetch("/api/shakemap", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": apiKey,
-      },
-      body: JSON.stringify({ seiscomp_oid: seiscompOid }),
-    });
-    const payload = await response.json();
+    const requestHeaders = {
+      "Content-Type": "application/json",
+      accept: "application/json",
+    };
+    if (apiKey) {
+      requestHeaders["X-API-Key"] = apiKey;
+    }
 
-    if (!response.ok) {
-      eventsStatus.textContent = payload.error || "ShakeMap გენერაცია ვერ მოხერხდა.";
-      return;
+    let payload;
+    if (accessToken && typeof window.makeApiRequest === "function") {
+      payload = await window.makeApiRequest("/api/shakemap", {
+        method: "POST",
+        headers: requestHeaders,
+        body: JSON.stringify({ seiscomp_oid: seiscompOid }),
+      });
+      if (!payload || payload.error) {
+        eventsStatus.textContent = payload?.error || "ShakeMap გენერაცია ვერ მოხერხდა.";
+        return;
+      }
+    } else {
+      const response = await fetch("/api/shakemap", {
+        method: "POST",
+        headers: requestHeaders,
+        body: JSON.stringify({ seiscomp_oid: seiscompOid }),
+      });
+      payload = await response.json();
+
+      if (!response.ok) {
+        eventsStatus.textContent = payload.error || "ShakeMap გენერაცია ვერ მოხერხდა.";
+        return;
+      }
     }
 
     eventsStatus.textContent = `ShakeMap წარმატებით დაგენერირდა (${seiscompOid}).`;

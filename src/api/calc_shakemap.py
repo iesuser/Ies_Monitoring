@@ -61,10 +61,10 @@ class RunShakeMap(Resource):
         except Exception:
             return False
 
-    @shakemap_ns.expect(shakemap_model)
+    @shakemap_ns.doc(parser=shakemap_parser)
     @shakemap_ns.doc(
         security=[{'ApiKeyAuth': []}, {'JsonWebToken': []}],
-        description='ShakeMap-ის გაშვება X-API-Key-ით ან JWT Bearer ტოკენით'
+        description='ShakeMap-ის გაშვება შესაძლებელია X-API-Key-ით ან JWT Bearer ტოკენით',
     )
     def post(self):
         # --- მოთხოვნის body-ის დამუშავება ---
@@ -73,14 +73,14 @@ class RunShakeMap(Resource):
         # --- ავტორიზაციის შემოწმება ---
         if not self._is_authorized():
             logger.warning("ShakeMap run denied: seiscomp_oid=%s unauthorized", seiscomp_oid)
-            return {'error': 'Unauthorized - provide valid X-API-Key or JWT token'}, 401
+            return {'error': 'არ გაქვს წვდომა. მიუთითე სწორი X-API-Key ან JWT ტოკენი.'}, 401
 
         try:
             # --- მოვლენის მოძებნა seiscomp_oid-ით ---
             event = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
             if not event:
                 logger.info("ShakeMap run failed: seiscomp_oid=%s not found", seiscomp_oid)
-                return {"error": f"Event {seiscomp_oid} not found"}, 404
+                return {"error": f"მოვლენა ვერ მოიძებნა: {seiscomp_oid}"}, 404
 
             parsed_data = {
                 "event_id": event.event_id,
@@ -89,7 +89,7 @@ class RunShakeMap(Resource):
                 "latitude": event.latitude,
                 "depth": event.depth,
                 "ml": event.ml,
-                "desc": event.region_ge or "Event Description"
+                "desc": event.region_ge or "მოვლენის აღწერა"
             }
 
             # --- ShakeMap worker-ის გაშვება ---
@@ -111,7 +111,7 @@ class RunShakeMap(Resource):
         except Exception as e:
             logger.exception("ShakeMap run exception: seiscomp_oid=%s", seiscomp_oid)
             return {
-                "status": "failed",
+                "status": "წარუმატებელია",
                 "event_id": seiscomp_oid,
                 "error": str(e)
             }, 500
@@ -135,7 +135,7 @@ class ShakeMapResults(Resource):
         event = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
         if not event:
             logger.info("ShakeMap results failed: seiscomp_oid=%s not found", seiscomp_oid)
-            return {"error": f"Event {seiscomp_oid} not found"}, 404
+            return {"error": f"მოვლენა ვერ მოიძებნა: {seiscomp_oid}"}, 404
 
         products_path = get_products_path(seiscomp_oid, event.event_id)
         images = []
@@ -151,7 +151,7 @@ class ShakeMapResults(Resource):
             )
 
         return {
-            "status": "success",
+            "status": "წარმატებულია",
             "event_id": seiscomp_oid,
             "products_path": products_path,
             "images": images,
@@ -176,7 +176,7 @@ class ShakeMapResultImage(Resource):
         event = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
         if not event:
             logger.info("ShakeMap image failed: seiscomp_oid=%s event not found", seiscomp_oid)
-            return {"error": f"Event {seiscomp_oid} not found"}, 404
+            return {"error": f"მოვლენა ვერ მოიძებნა: {seiscomp_oid}"}, 404
 
         filename = ALLOWED_IMAGES.get(image_type)
         if not filename:
@@ -185,7 +185,7 @@ class ShakeMapResultImage(Resource):
                 seiscomp_oid,
                 image_type,
             )
-            return {"error": f"Unsupported image type: {image_type}"}, 400
+            return {"error": f"სურათის ტიპი არ არის მხარდაჭერილი: {image_type}"}, 400
 
         products_path = get_products_path(seiscomp_oid, event.event_id)
         file_path = os.path.join(products_path, filename)
@@ -195,7 +195,7 @@ class ShakeMapResultImage(Resource):
                 seiscomp_oid,
                 filename,
             )
-            return {"error": f"Image not found: {filename}"}, 404
+            return {"error": f"სურათი ვერ მოიძებნა: {filename}"}, 404
 
         logger.info(
             "ShakeMap image success: seiscomp_oid=%s image_type=%s",
