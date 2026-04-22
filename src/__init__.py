@@ -4,7 +4,7 @@ from flask_cors import CORS
 from src.config import Config
 from src.commands import init_db, populate_db
 from src.extensions import db, migrate, jwt, api as restx_api
-from src.logging_config import configure_logging
+from src.logger import configure_logging
 from src.models import User
 from src.views import shakemap_blueprint, auth_blueprint, accounts_blueprint, events_blueprint
 from src import api as api_package # ensure namespaces are imported

@@ -5,21 +5,38 @@ import os
 from os import path, sep, pardir
 
 # Load environment variables from a custom path
-load_dotenv(dotenv_path='./env')  # Adjust the path if needed
+load_dotenv(dotenv_path='.env')  # Adjust the path if needed
 
 class Config:
+    APP_ENV = os.getenv('APP_ENV', 'development')
     # Flask secret key
     MY_SECRET_KEY = os.getenv('MY_SECRET_KEY', 'default_secret_key')
     # Base directory
     BASE_DIR = path.abspath(path.dirname(__file__) + sep + pardir)
     # Templates
     TEMPLATES_FOLDERS = path.join(BASE_DIR, 'src', 'templates')
+
     # ShakeMap base path
-    SHAKEMAP_BASE_PATH = os.getenv('SHAKEMAP_BASE_PATH', '/home/sysop/shakemap_profiles/default/data')  # default path
-    # SQLAlchemy
+    SHAKEMAP_BASE_PATH = os.getenv('SHAKEMAP_BASE_PATH', f'{os.getenv("HOME")}/shakemap_profiles/default/data')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # Default: SQLite (local dev)
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{path.join(BASE_DIR, 'db.sqlite')}"
+    DEV_SQLALCHEMY_DATABASE_URI = f"sqlite:///{path.join(BASE_DIR, 'db.sqlite')}"
+
+    # MySQL credentials
+    MYSQL_CONTAINER_NAME = os.getenv('MYSQL_CONTAINER_NAME', 'ies_monitoring_db')
+    MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
+    MYSQL_ROOT_USER = os.getenv('MYSQL_ROOT_USER', 'root')
+    MYSQL_ROOT_PASSWORD = os.getenv('MYSQL_ROOT_PASSWORD', 'Ml_Root88')
+    MYSQL_DATABASE = os.getenv('MYSQL_DATABASE', 'ies_monitoring')
+    MYSQL_USER = os.getenv('MYSQL_USER', 'ies_monitoring')
+    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'Ml_Ies_monitoring88')
+
+    PROD_SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DATABASE}"
+    SQLALCHEMY_DATABASE_URI = (
+            os.getenv('PROD_SQLALCHEMY_DATABASE_URI', PROD_SQLALCHEMY_DATABASE_URI)
+            if APP_ENV == "production"
+            else os.getenv('DEV_SQLALCHEMY_DATABASE_URI', DEV_SQLALCHEMY_DATABASE_URI)
+        )
     
     # Uncomment for production
     # AWS_MYSQL_HOST = os.getenv('AWS_MYSQL_HOST', 'default_host')
@@ -54,7 +71,7 @@ class Config:
     MAIL_PORT = os.getenv('MAIL_PORT', 587)
     MAIL_USERNAME = os.getenv('MAIL_USERNAME', 'your_email@gmail.com')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', 'your_password')
-    
+    REDIS_URL = os.getenv('REDIS_URL', '')
 
 class TestConfig(Config):
 

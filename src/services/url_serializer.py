@@ -2,7 +2,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from src.config import Config
 
 class UrlSerializer():
-    url_serializer = URLSafeTimedSerializer(Config.SECRET_KEY)
+    url_serializer = URLSafeTimedSerializer(Config.MY_SECRET_KEY)
 
     def generate_token(self, data, salt):
         token = self.url_serializer.dumps(data, salt=salt)

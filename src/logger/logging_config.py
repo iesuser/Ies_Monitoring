@@ -1,7 +1,8 @@
-# src/logging_config.py
+# src/logger/logging_config.py
 import os
 import logging.config
 from logging.handlers import RotatingFileHandler
+
 
 def configure_logging(app):
     os.makedirs("logs", exist_ok=True)
@@ -66,7 +67,7 @@ def configure_logging(app):
         },
         "loggers": {
             "app.events": {"handlers": ["events_file"], "level": "INFO", "propagate": False},
-            "app.filters": {"handlers": ["filters_file"], "level": "INFO", "propagate": False}, 
+            "app.filters": {"handlers": ["filters_file"], "level": "INFO", "propagate": False},
             "app.auth": {"handlers": ["auth_file"], "level": "INFO", "propagate": False},
             "app.shakemap": {"handlers": ["shakemap_file"], "level": "INFO", "propagate": False},
             "app.run_shakemap": {"handlers": ["run_shakemap_file"], "level": "INFO", "propagate": False},
@@ -74,3 +75,4 @@ def configure_logging(app):
         },
         "root": {"level": "WARNING"},
     })
+
