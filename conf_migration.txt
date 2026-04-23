@@ -1,0 +1,9 @@
+flask db migrate -m "fix cyclic fk between seismic_events and shakemap_jobs"
+flask db upgrade
+
+Migration ნიშნავს მოდელის ცვლილებების DB სქემაში გადატანას: ჯერ `flask db migrate` ქმნის ახალ revision-ს, შემდეგ `flask db upgrade` ამ ცვლილებებს რეალურად ასრულებს ბაზაზე.
+
+შესაძლებელია კომანდებით გამოსაყენებლად გამოსახულება:
+flask db migrate -m "მოდელის ცვლილებების განხორციელება"
+flask db upgrade
+
