@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from src.extensions import db
 from src.models.base import BaseModel
 
-# ONE - TO - ONE relationship
+# User-თან დაკავშირებული relationship-ები
 class User(db.Model, BaseModel):
     __tablename__ = "users"
 
@@ -20,6 +20,9 @@ class User(db.Model, BaseModel):
     # One-to-Many relationship with Role
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     role = db.relationship('Role', back_populates='users')
+
+    # ერთი მომხმარებელი -> მრავალი ShakeMap job
+    shakemap_jobs = db.relationship('ShakemapJob',back_populates='user',foreign_keys='ShakemapJob.uuid')
 
     @property
     def password(self):

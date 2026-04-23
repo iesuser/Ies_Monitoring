@@ -1,12 +1,13 @@
 import os
 import logging
+from datetime import datetime, timezone
 
 from flask_restx import Resource
 from flask import request, send_file
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 
 from src.api.nsmodels import shakemap_ns, shakemap_parser, shakemap_model
-from src.models.seismic_event import SeismicEvent
+from src.models import SeismicEvent, ShakemapJob
 from src.workers.run_shakemap import run_shakemap_worker
 from src.config import Config
 
@@ -19,21 +20,6 @@ ALLOWED_IMAGES = {
 }
 
 logger = logging.getLogger("app.shakemap")
-
-
-def get_products_path(seiscomp_oid, event_id=None):
-    """products ბილიკს ჯერ OID-ით ეძებს, შემდეგ რიცხვითი event_id-ით."""
-    candidates = [
-        f"{SHAKEMAP_BASE_PATH}/{seiscomp_oid}/current/products" if seiscomp_oid else None
-    ]
-    if event_id is not None:
-        candidates.append(f"{SHAKEMAP_BASE_PATH}/{event_id}/current/products")
-
-    for path in candidates:
-        if path and os.path.isdir(path):
-            return path
-
-    return candidates[0]
 
 @shakemap_ns.route("/shakemap")
 @shakemap_ns.doc(
@@ -82,12 +68,22 @@ class RunShakeMap(Resource):
                 logger.info("ShakeMap run failed: seiscomp_oid=%s not found", seiscomp_oid)
                 return {"error": f"მოვლენა ვერ მოიძებნა: {seiscomp_oid}"}, 404
 
-            # --- მიმდინარე დათვლა დაიწყო ---
-            event.shakemap_status = "running"
-            event.save()
+            shakemap_job = ShakemapJob.query.filter_by(seiscomp_oid=seiscomp_oid).first()
+            user_uuid = get_jwt_identity()
+            if not shakemap_job:
+                shakemap_job = ShakemapJob(seiscomp_oid=seiscomp_oid, uuid=user_uuid)
+                shakemap_job.create()
+
+            if shakemap_job.status == "running":
+                logger.info("ShakeMap run failed: seiscomp_oid=%s already running", seiscomp_oid)
+                return {"error": f"მოვლენა უკვე გამშვებია: {seiscomp_oid}"}, 400
+
+            shakemap_job.status = "running"
+            shakemap_job.started_at = datetime.now(timezone.utc)
+            shakemap_job.save()
 
             parsed_data = {
-                "event_id": event.event_id,
+                "seiscomp_oid": seiscomp_oid,
                 "time": event.origin_time.isoformat(),
                 "longitude": event.longitude,
                 "latitude": event.latitude,
@@ -99,28 +95,30 @@ class RunShakeMap(Resource):
             # --- ShakeMap worker-ის გაშვება ---
             result = run_shakemap_worker(parsed_data)
             # --- წარმატებული დათვლის შემდეგ სტატუსის განახლება ---
-            event.shakemap_status = "generated"
+            shakemap_job.status = "generated"
+            shakemap_job.finished_at = datetime.now(timezone.utc)
+            shakemap_job.save()
+
             # --- მოვლენის შენახვა ---
             event.save()
-            logger.info(
-                "ShakeMap run success: seiscomp_oid=%s event_id=%s",
-                seiscomp_oid,
-                event.event_id,
-            )
+            logger.info("ShakeMap run success: seiscomp_oid=%s", seiscomp_oid)
+            
             # --- შედეგის დაბრუნება ---
             return result, 200
         except ValueError as e:
-            event = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
-            if event:
-                event.shakemap_status = "failed"
-                event.save()
+            shakemap_job = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
+            if shakemap_job:
+                shakemap_job.status = "failed"
+                shakemap_job.finished_at = datetime.now(timezone.utc)
+                shakemap_job.save()
             logger.info("ShakeMap run failed: seiscomp_oid=%s value error=%s", seiscomp_oid, e)
             return {"error": str(e)}, 404
         except Exception as e:
-            event = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
-            if event:
-                event.shakemap_status = "failed"
-                event.save()
+            shakemap_job = ShakemapJob.query.filter_by(seiscomp_oid=seiscomp_oid).first()
+            if shakemap_job:
+                shakemap_job.status = "failed"
+                shakemap_job.finished_at = datetime.now(timezone.utc)
+                shakemap_job.save()
             logger.exception("ShakeMap run exception: seiscomp_oid=%s", seiscomp_oid)
             return {
                 "status": "წარუმატებელია",
@@ -144,12 +142,12 @@ class RunShakeMap(Resource):
 class ShakeMapResults(Resource):
     def get(self, seiscomp_oid):
         """აბრუნებს კონკრეტული მოვლენის ShakeMap პროდუქტებს."""
-        event = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
-        if not event:
+        shakemap_job = ShakemapJob.query.filter_by(seiscomp_oid=seiscomp_oid).first()
+        if not shakemap_job:
             logger.info("ShakeMap results failed: seiscomp_oid=%s not found", seiscomp_oid)
             return {"error": f"მოვლენა ვერ მოიძებნა: {seiscomp_oid}"}, 404
 
-        products_path = get_products_path(seiscomp_oid, event.event_id)
+        products_path = f"{SHAKEMAP_BASE_PATH}/{seiscomp_oid}/current/products" if seiscomp_oid else None
         images = []
         for key, filename in ALLOWED_IMAGES.items():
             file_path = os.path.join(products_path, filename)
@@ -199,7 +197,7 @@ class ShakeMapResultImage(Resource):
             )
             return {"error": f"სურათის ტიპი არ არის მხარდაჭერილი: {image_type}"}, 400
 
-        products_path = get_products_path(seiscomp_oid, event.event_id)
+        products_path = f'{SHAKEMAP_BASE_PATH}/{seiscomp_oid}/current/products'
         file_path = os.path.join(products_path, filename)
         if not os.path.exists(file_path):
             logger.info(

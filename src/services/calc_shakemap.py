@@ -1,9 +1,11 @@
 import subprocess, os, shlex, logging
 
+logger = logging.getLogger("app.calc_shakemap")
+
 # ShakeMap calculation function
 def calc_shakemap(parsed_data):
-    event_id = parsed_data["event_id"]
-    logging.info(f"Starting ShakeMap calculation for event {event_id}")
+    event_id = parsed_data["seiscomp_oid"]
+    logger.info("Starting ShakeMap calculation for event %s", event_id)
     conda_exe = os.environ.get("CONDA_EXE", "conda")
     conda_env = os.environ.get("SHAKEMAP_CONDA_ENV", "shakemap")
 
@@ -26,7 +28,7 @@ def calc_shakemap(parsed_data):
         f'{parsed_data["longitude"]} {parsed_data["latitude"]} '
         f'{parsed_data["depth"]} {parsed_data["ml"]} "{parsed_data["desc"]}" -n'
     )
-    logging.info(f"Running ShakeMap for event {event_id} with command: {sm_create_cmd}")
+    logger.info("Running ShakeMap for event %s with command: %s", event_id, sm_create_cmd)
 
     shake_cmd = f'echo {event_id} | shake {event_id} select assemble model contour mapping'
 
@@ -45,7 +47,7 @@ def calc_shakemap(parsed_data):
         text=True
     )
     
-    logging.info(f"ShakeMap finished for event {event_id}")
+    logger.info("ShakeMap finished for event %s", event_id)
     # Return stdout and stderr results
     return {
         "stdout": result.stdout.strip(),

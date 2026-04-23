@@ -40,8 +40,7 @@ def populate_db_core():
         region_ge="ქალაქი ონი - სამხრეთ-აღმოსავლეთი - 8კმ. სოფელი ირი.",
         region_en="City Oni - South-East - 8km. Village Iri.",
         area="local",
-        ml=5.33,
-        shakemap_status="pending",
+        ml=5.33
     )
     new_event.create()
 

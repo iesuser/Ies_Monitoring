@@ -5,7 +5,7 @@ BASE_PATH_DEFAULT = "/home/sysop/shakemap_profiles/default/data"
 logger = logging.getLogger("app.run_shakemap")
 
 def run_shakemap_worker(parsed_data):
-    event_id = parsed_data["event_id"]
+    event_id = parsed_data["seiscomp_oid"]
 
     try:
         logger.info("ShakeMap worker started for: %s", event_id)
@@ -20,7 +20,7 @@ def run_shakemap_worker(parsed_data):
         logger.info("ShakeMap worker finished for: %s", event_id)
         return {
             "status": "generated",
-            "event_id": event_id
+            "seiscomp_oid": event_id
         }
     except Exception as e:
         logger.error("ShakeMap worker failed for %s: %s", event_id, str(e))

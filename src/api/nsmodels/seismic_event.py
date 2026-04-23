@@ -16,11 +16,11 @@ event_model = api.model('SeismicEvent', {
     'region_en': fields.String(description='Region EN'),
     'area': fields.String(description='Area name'),
     'ml': fields.Float(required=True, description='Local Magnitude (ML)'),
+    'created_at': fields.DateTime(description='Record creation timestamp (UTC)'),
     'shakemap_status': fields.String(
         description='ShakeMap status (pending/running/generated/failed)',
         enum=['pending', 'running', 'generated', 'failed'],
-    ),
-    'created_at': fields.DateTime(description='Record creation timestamp (UTC)')
+    )
 })
 
 # Request Parser
@@ -36,10 +36,3 @@ event_parser.add_argument("region_ge", type=str, required=False, help="Region GE
 event_parser.add_argument("region_en", type=str, required=False, help="Region EN (optional)")
 event_parser.add_argument("area", type=str, required=False, help="Area (optional)")
 event_parser.add_argument("ml", type=float, required=True, help="Local Magnitude (ML)")
-event_parser.add_argument(
-    "shakemap_status",
-    type=str,
-    required=False,
-    choices=("pending", "running", "generated", "failed"),
-    help="ShakeMap status: pending, running, generated, failed (optional)",
-)
