@@ -6,6 +6,8 @@ const galleryModalElement = document.getElementById("galleryModal");
 const galleryModalBody = document.getElementById("galleryModalBody");
 const galleryModalLabel = document.getElementById("galleryModalLabel");
 const galleryModal = galleryModalElement ? new bootstrap.Modal(galleryModalElement) : null;
+const STATUS_POLL_INTERVAL_MS = 4000;
+let statusPollTimer = null;
 
 // უსაფრთხო escape, რომ HTML ინექცია არ მოხდეს ცხრილში.
 function escapeHtml(value) {
@@ -43,6 +45,20 @@ function buildShakeMapStatusBadge(status) {
     default:
       return '<span class="badge text-bg-secondary" title="მოლოდინში">pending</span>';
   }
+}
+
+// როცა რომელიმე ივენთი running სტატუსშია, სია ავტომატურად ახლდება.
+function scheduleRunningStatusPoll(shouldPoll) {
+  if (statusPollTimer) {
+    clearTimeout(statusPollTimer);
+    statusPollTimer = null;
+  }
+  if (!shouldPoll) {
+    return;
+  }
+  statusPollTimer = window.setTimeout(() => {
+    loadEvents();
+  }, STATUS_POLL_INTERVAL_MS);
 }
 
 // გალერეის ღილაკებზე handler-ების მიბმა.
@@ -141,6 +157,8 @@ async function regenerateShakeMap(button) {
   } finally {
     button.disabled = false;
     button.innerHTML = '<i class="fas fa-rotate-right"></i>';
+    // ოპერაციის შედეგის მიუხედავად ვაახლებთ სიას, რომ running -> generated/failed გადმოვიდეს.
+    await loadEvents();
   }
 }
 
@@ -278,11 +296,13 @@ function renderEvents(events) {
     )
     .join("");
 
+  const hasRunningStatus = sortedEvents.some((event) => event.shakemap_status === "running");
   eventsStatus.textContent = `ჩაიტვირთა ${sortedEvents.length} ივენთი.`;
   totalEvents.textContent = String(sortedEvents.length);
   lastUpdated.textContent = getLatestCreatedAt(sortedEvents);
   bindGalleryButtons();
   bindRegenerateButtons();
+  scheduleRunningStatusPoll(hasRunningStatus);
 }
 
 // /api/events-დან მონაცემების წამოღება და UI-ის განახლება.
@@ -310,6 +330,7 @@ async function loadEvents() {
     eventsStatus.textContent = "მოთხოვნა ჩავარდა ივენთების ჩატვირთვისას.";
     totalEvents.textContent = "—";
     lastUpdated.textContent = "—";
+    scheduleRunningStatusPoll(true);
   }
 }
 

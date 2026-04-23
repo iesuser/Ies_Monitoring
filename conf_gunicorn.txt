@@ -1,0 +1,74 @@
+Gunicorn systemd სერვისის შექმნა (IES Monitoring)
+==================================================
+
+1) შექმენი სერვისის ფაილი
+-------------------------
+sudo nano /etc/systemd/system/ies_monitoring_main.service
+
+ჩასვი ეს კონფიგი:
+
+[Unit]
+Description=IES Monitoring Main Flask App (Gunicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=sysop
+Group=www-data
+WorkingDirectory=/var/www/Ies_Monitoring-main
+
+Environment="PATH=/var/www/Ies_Monitoring-main/venv/bin:/home/sysop/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin"
+Environment="CONDA_EXE=/home/sysop/miniconda3/bin/conda"
+Environment="SHAKEMAP_CONDA_ENV=shakemap"
+Environment="APP_ENV=production"
+EnvironmentFile=/var/www/Ies_Monitoring-main/.env
+
+# Celery jobs
+ExecStart=/var/www/Ies_Monitoring-main/venv/bin/celery -A src.celery_app.celery_app worker --loglevel=info --concurrency=2
+
+ExecStart=/var/www/Ies_Monitoring-main/venv/bin/gunicorn -w 4 -b 127.0.0.1:5000 app:flask_app
+
+Restart=always
+RestartSec=5
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
+
+
+2) ჩაიტვირთოს systemd-ს ახალი კონფიგი
+-------------------------------------
+sudo systemctl daemon-reload
+
+
+3) ჩართე სერვისი boot-ზე
+------------------------
+sudo systemctl enable ies_monitoring_main
+
+
+4) გაუშვი/გადატვირთე სერვისი
+----------------------------
+sudo systemctl restart ies_monitoring_main
+
+
+5) შეამოწმე სტატუსი
+------------------
+sudo systemctl status ies_monitoring_main
+
+
+6) ცოცხალი ლოგები
+-----------------
+journalctl -u ies_monitoring_main -f
+
+
+სასარგებლო შენიშვნები
+----------------------
+- app target არის app:flask_app, რადგან app.py-ში გაქვს:
+  flask_app = create_app()
+- თუ შეცვლი სერვისის ფაილს, ყოველთვის თავიდან გაუშვი:
+  sudo systemctl daemon-reload
+  sudo systemctl restart ies_monitoring_main
+- თუ ShakeMap ბრძანებები ვერ ეშვება, პირველად გადაამოწმე:
+  which conda
+  bash -lc 'eval "$(/home/sysop/miniconda3/bin/conda shell.bash hook)" && conda activate shakemap && command -v sm_create && command -v shake'

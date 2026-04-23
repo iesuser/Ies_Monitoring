@@ -70,8 +70,65 @@ Swagger-ში ორივე security სქემა აღწერილი
 - `API_KEY`
 - `JWT_SECRET_KEY`  (აუცილებლად 32+ bytes, ძლიერი მნიშვნელობა)
 - `SHAKEMAP_BASE_PATH`
+- `CONDA_EXE` (მაგ.: `/home/sysop/miniconda3/bin/conda`)
+- `SHAKEMAP_CONDA_ENV` (მაგ.: `shakemap`)
 - DB პარამეტრები (SQLite/MySQL გარემოზე დამოკიდებული)
 - MAIL პარამეტრები (reset password flow-სთვის)
+
+---
+
+## აპლიკაციის გაშვების სრული ინსტრუქცია (Production, service-ით)
+
+### 0) წინაპირობები (აუცილებელი)
+სერვისის გაშვებამდე სერვერზე უნდა იყოს:
+- Python + virtualenv
+- Miniconda/Conda
+- ShakeMap გარემო (`shakemap` conda env)
+- ShakeMap ბრძანებები: `sm_create`, `shake`
+- გამართული ბაზა (MySQL ან SQLite)
+- Nginx (თუ reverse proxy იყენება)
+
+### 1) ShakeMap გარემოს შემოწმება
+იგივე user-ით (მაგ. `sysop`) გადაამოწმე:
+- `which conda` → უნდა აბრუნებდეს conda path-ს
+- `bash -lc 'eval "$(/home/sysop/miniconda3/bin/conda shell.bash hook)" && conda activate shakemap && command -v sm_create && command -v shake'`
+
+თუ რომელიმე command ვერ იპოვა, ჯერ ეს გარემო გაასწორე, მერე გაუშვი აპი.
+
+### 2) ბაზის მომზადება
+- შექმენი ბაზა (თუ MySQL-ია)
+- მიუთითე სწორი DB credentials `.env`-ში
+- საჭიროებისას გაუშვი:
+  - `flask init_db --confirm-text RESET_DB` (სიფრთხილით, reset-ს აკეთებს)
+  - `flask populate_db` (საწყისი მონაცემებისთვის)
+
+### 3) `.env` შევსება (აუცილებელი ველები)
+`.env`-ში შეიყვანე რეალური მნიშვნელობები:
+- `APP_ENV=production`
+- `MY_SECRET_KEY`
+- `JWT_SECRET_KEY`
+- `API_KEY`
+- `MYSQL_HOST`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` (ან შესაბამისი SQLALCHEMY URI)
+- `MAIL_SERVER`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`
+- `SHAKEMAP_BASE_PATH`
+- `CONDA_EXE=/home/sysop/miniconda3/bin/conda`
+- `SHAKEMAP_CONDA_ENV=shakemap`
+
+### 4) Gunicorn systemd სერვისის გაშვება
+შექმენი/განაახლე `/etc/systemd/system/ies_monitoring_main.service`  
+(Template იხილე `create_service.txt` ფაილში)
+
+შემდეგ:
+- `sudo systemctl daemon-reload`
+- `sudo systemctl enable ies_monitoring_main`
+- `sudo systemctl restart ies_monitoring_main`
+- `sudo systemctl status ies_monitoring_main`
+
+### 5) სერვისის ლოგების მონიტორინგი
+- `journalctl -u ies_monitoring_main -f`
+- პროექტის ლოგები: `logs/*.log`
+
+თუ ნახავ `Missing command: conda`/`sm_create`/`shake`, ნიშნავს service გარემოში PATH/conda არასწორია და უნდა გასწორდეს service `Environment` ნაწილში.
 
 ---
 
@@ -100,9 +157,9 @@ Swagger-ში ორივე security სქემა აღწერილი
 ---
 
 ## Deployment მოკლედ
-- Dockerfile + docker-compose უკვე დევს პროექტში
-- სერვისები: Flask + Nginx + MySQL
-- ლოგები და მიგრაციები volume-ებით არის მიბმული
+- რეკომენდებული გაშვება: `systemd + gunicorn + nginx`
+- ShakeMap დათვლა უნდა მუშაობდეს იმავე სერვერზე, სადაც conda/shakemap გარემოა გამართული
+- Docker ფაილები პროექტში არსებობს, მაგრამ production-ში გამოიყენე მხოლოდ მაშინ, როცა გარემოს ცვლადები/volume/PATH სწორადაა დაგეგმილი
 
 ---
 

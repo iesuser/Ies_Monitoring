@@ -1,0 +1,63 @@
+Redis კონფიგურაცია (Ubuntu, Celery-სთვის)
+=========================================
+
+1) ინსტალაცია (თუ ჯერ არ არის)
+------------------------------
+sudo apt update
+sudo apt install redis-server -y
+
+2) ძირითადი კონფიგი
+-------------------
+Redis-ის მთავარი კონფიგი:
+/etc/redis/redis.conf
+
+გახსენი:
+sudo nano /etc/redis/redis.conf
+
+შეამოწმე/დააყენე ეს მნიშვნელობები:
+
+# მხოლოდ localhost-ზე მოსმენა (უსაფრთხო, თუ ყველაფერი ერთ სერვერზეა)
+bind 127.0.0.1 ::1
+
+# დაცული რეჟიმი ჩართული იყოს
+protected-mode yes
+
+# Redis default port
+port 6379
+
+# სურვილისამებრ პაროლი (რეკომენდებულია, თუ სხვა host-დანაც იქნება წვდომა)
+# requirepass YOUR_STRONG_REDIS_PASSWORD
+
+# persistence (სტანდარტული უსაფრთხო ვარიანტი)
+appendonly yes
+appendfsync everysec
+
+3) სერვისის გაშვება
+-------------------
+sudo systemctl enable redis-server
+sudo systemctl restart redis-server
+sudo systemctl status redis-server
+
+4) ტესტი
+--------
+redis-cli ping
+# პასუხი უნდა იყოს: PONG
+
+თუ requirepass დააყენე:
+redis-cli -a YOUR_STRONG_REDIS_PASSWORD ping
+
+5) Celery-თან გამოყენების მაგალითი (.env)
+------------------------------------------
+REDIS_URL=redis://127.0.0.1:6379/0
+
+# თუ პაროლი ჩართულია:
+# REDIS_URL=redis://:YOUR_STRONG_REDIS_PASSWORD@127.0.0.1:6379/0
+
+6) Troubleshooting
+------------------
+- თუ `Connection refused`:
+  sudo systemctl status redis-server
+  sudo journalctl -u redis-server -f
+
+- თუ port დაკავებულია:
+  sudo ss -lntp | rg 6379
