@@ -49,27 +49,18 @@ window.openEditEventModal = function openEditEventModal(eventId) {
 async function submitEditEvent(event) {
   event.preventDefault();
 
-  const apiKey = window.getApiKey ? window.getApiKey() : null;
-  if (!apiKey) {
-    const message = "API key აუცილებელია ივენთის რედაქტირებისთვის.";
-    editEventStatus.textContent = message;
-    editEventStatus.className = "small mt-3 text-danger";
-    showAlert("alertPlaceholder", "danger", message);
-    return;
-  }
-
   const payload = buildEditEventPayload();
+  const eventId = payload.event_id;
   editEventSubmitBtn.disabled = true;
   editEventStatus.textContent = "ივენთის განახლება მიმდინარეობს...";
   editEventStatus.className = "small mt-3 text-muted";
 
   try {
-    const data = await makeApiRequest("/api/events", {
-      method: "POST",
+    const data = await window.makeApiRequest(`/api/events/${encodeURIComponent(eventId)}`, {
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         accept: "application/json",
-        "X-API-Key": apiKey,
       },
       body: JSON.stringify(payload),
     });
