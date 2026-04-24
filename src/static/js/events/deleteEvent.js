@@ -14,17 +14,10 @@ window.deleteEvent = async function deleteEvent(eventId) {
     return;
   }
 
-  const apiKey = window.getApiKey ? window.getApiKey() : null;
-  if (!apiKey) {
-    showAlert("alertPlaceholder", "danger", "API key აუცილებელია ივენთის წაშლისთვის.");
-    return;
-  }
-
-  const data = await makeApiRequest(`/api/events/${Number(eventId)}`, {
+  const data = await window.makeApiRequest(`/api/events/${Number(eventId)}`, {
     method: "DELETE",
     headers: {
       accept: "application/json",
-      "X-API-Key": apiKey,
     },
   });
 

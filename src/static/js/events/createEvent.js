@@ -23,27 +23,17 @@ function buildCreateEventPayload() {
 async function createEvent(event) {
   event.preventDefault();
 
-  const apiKey = window.getApiKey ? window.getApiKey() : null;
-  if (!apiKey) {
-    const message = "API key აუცილებელია ივენთის დასამატებლად.";
-    addEventStatus.textContent = message;
-    addEventStatus.className = "small mt-3 text-danger";
-    showAlert("alertPlaceholder", "danger", message);
-    return;
-  }
-
   const payload = buildCreateEventPayload();
   addEventSubmitBtn.disabled = true;
   addEventStatus.textContent = "ივენთის დამატება მიმდინარეობს...";
   addEventStatus.className = "small mt-3 text-muted";
 
   try {
-    const data = await makeApiRequest("/api/events", {
+    const data = await window.makeApiRequest("/api/events", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         accept: "application/json",
-        "X-API-Key": apiKey,
       },
       body: JSON.stringify(payload),
     });
