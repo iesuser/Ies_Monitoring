@@ -4,8 +4,9 @@ from datetime import datetime, timezone
 
 from flask_restx import Resource
 from flask import request, send_file
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from flask_jwt_extended import get_jwt_identity
 
+from src.utils import is_authorized_request
 from src.api.nsmodels import shakemap_ns, shakemap_parser, shakemap_model
 from src.models import SeismicEvent, ShakemapJob
 from src.workers.run_shakemap import run_shakemap_worker
@@ -32,21 +33,6 @@ logger = logging.getLogger("app.shakemap")
     }
 )
 class RunShakeMap(Resource):
-    @staticmethod
-    def _is_authorized():
-        # 1) შიდა სერვისის ავტორიზაცია API key-ით
-        api_key = request.headers.get('X-API-Key')
-        if api_key and api_key == Config.API_KEY:
-            return True
-
-        # 2) მომხმარებლის ავტორიზაცია JWT Bearer ტოკენით
-        try:
-            verify_jwt_in_request()
-            identity = get_jwt_identity()
-            return bool(identity)
-        except Exception:
-            return False
-
     @shakemap_ns.doc(parser=shakemap_parser)
     @shakemap_ns.doc(
         security=[{'ApiKeyAuth': []}, {'JsonWebToken': []}],
@@ -57,7 +43,7 @@ class RunShakeMap(Resource):
         args = shakemap_parser.parse_args()
         seiscomp_oid = args["seiscomp_oid"]
         # --- ავტორიზაციის შემოწმება ---
-        if not self._is_authorized():
+        if not is_authorized_request():
             logger.warning("ShakeMap run denied: seiscomp_oid=%s unauthorized", seiscomp_oid)
             return {'error': 'არ გაქვს წვდომა. მიუთითე სწორი X-API-Key ან JWT ტოკენი.'}, 401
 

@@ -10,7 +10,7 @@ __pycache__/
 .env
 /export/
 .pytest_cache
-/utils/credentials/
+/tools/credentials/
 *.log
 *.bak
 *.tmp
