@@ -1,0 +1,30 @@
+[Unit]
+Description=Celery Worker for IES Monitoring
+After=network.target redis.service
+Requires=redis.service
+
+[Service]
+Type=simple
+User=sysop
+Group=sysop
+
+WorkingDirectory=/var/www/Ies_Monitoring-main
+
+# .env ფაილის ჩატვირთვა
+EnvironmentFile=/var/www/Ies_Monitoring-main/.env
+
+# venv celery
+ExecStart=/var/www/Ies_Monitoring-main/venv/bin/celery \
+    -A src.celery_app.celery_app worker \
+    --loglevel=info \
+    --concurrency=2
+
+Restart=always
+RestartSec=5
+
+# Logs (optional but useful)
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

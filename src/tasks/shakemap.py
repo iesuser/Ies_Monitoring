@@ -1,60 +1,55 @@
 # src/tasks/shakemap.py
 
-from src.celery_app import celery
-import os
-from redis import Redis
 from datetime import datetime, timezone
-from src.extensions import db
+import logging
+
+from src.celery_app import celery
 from src.models import ShakemapJob
 from src.models.seismic_event import SeismicEvent
 from src.workers.run_shakemap import run_shakemap_worker
 
+logger = logging.getLogger("app.shakemap")
+
+
 @celery.task(bind=True)
-def run_shakemap(self, job_id, requester_lock_key=None, lock_value=None):
-    from src import create_app
+def run_shakemap(self, job_id):
+    # app_context ავტომატურად ედება src/celery_app.py-ის FlaskTask wrapper-იდან.
+    job = ShakemapJob.query.get(job_id)
+    if not job:
+        logger.warning("ShakeMap task skipped: job not found (job_id=%s)", job_id)
+        return
 
-    app = create_app()
-    redis_client = Redis.from_url(os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"), decode_responses=True)
+    event_oid = job.seiscomp_oid
+    event = SeismicEvent.query.filter_by(seiscomp_oid=event_oid).first()
 
-    with app.app_context():
-        job = db.session.get(ShakemapJob, job_id)
-        if not job:
-            return
+    try:
+        job.status = ShakemapJob.STATUS_RUNNING
+        job.started_at = datetime.now(timezone.utc)
+        job.error = None
+        job.save()
 
-        event = SeismicEvent.query.filter_by(seiscomp_oid=job.seiscomp_oid).first()
+        if not event:
+            raise ValueError(f"მოვლენა ვერ მოიძებნა: {event_oid}")
 
-        try:
-            job.status = ShakemapJob.STATUS_RUNNING
-            job.started_at = datetime.now(timezone.utc)
-            db.session.commit()
+        parsed_data = {
+            "seiscomp_oid": event.seiscomp_oid,
+            "time": event.origin_time.isoformat(),
+            "longitude": event.longitude,
+            "latitude": event.latitude,
+            "depth": event.depth,
+            "ml": event.ml,
+            "desc": event.region_ge or "მოვლენის აღწერა",
+        }
+        logger.info("ShakeMap worker started for event: %s", event_oid)
+        run_shakemap_worker(parsed_data)
 
-            if not event:
-                raise ValueError(f"მოვლენა ვერ მოიძებნა: {job.seiscomp_oid}")
-
-            parsed_data = {
-                "event_id": event.event_id,
-                "time": event.origin_time.isoformat(),
-                "longitude": event.longitude,
-                "latitude": event.latitude,
-                "depth": event.depth,
-                "ml": event.ml,
-                "desc": event.region_ge or "მოვლენის აღწერა",
-            }
-            run_shakemap_worker(parsed_data)
-
-            job.status = ShakemapJob.STATUS_GENERATED
-            job.error = None
-        except Exception as e:
-            job.status = ShakemapJob.STATUS_FAILED
-            job.error = str(e)
-        finally:
-            job.finished_at = datetime.now(timezone.utc)
-            db.session.commit()
-
-            if requester_lock_key and lock_value:
-                try:
-                    current_value = redis_client.get(requester_lock_key)
-                    if current_value == lock_value:
-                        redis_client.delete(requester_lock_key)
-                except Exception:
-                    pass
+        job.status = ShakemapJob.STATUS_GENERATED
+        job.error = None
+        logger.info("ShakeMap worker finished for event: %s", event_oid)
+    except Exception as e:
+        job.status = ShakemapJob.STATUS_FAILED
+        job.error = str(e)
+        logger.exception("ShakeMap worker failed for event: %s", event_oid)
+    finally:
+        job.finished_at = datetime.now(timezone.utc)
+        job.save()

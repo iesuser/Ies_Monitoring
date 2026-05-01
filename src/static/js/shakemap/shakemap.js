@@ -38,16 +38,20 @@ function buildShakeMapStatusBadge(status) {
   switch (status) {
     case "generated":
       return '<span class="badge text-bg-success" title="დათვლილია">generated</span>';
+    case "waiting":
+      return '<span class="badge text-bg-info text-dark" title="რიგშია">waiting</span>';
     case "running":
       return '<span class="badge text-bg-warning text-dark" title="მიმდინარეობს"><i class="fas fa-spinner fa-spin me-1"></i>running</span>';
     case "failed":
       return '<span class="badge text-bg-danger" title="შეცდომა">failed</span>';
+    case "pending":
+      return '<span class="badge text-bg-secondary" title="ჯერ არ არის გაშვებული">pending</span>';
     default:
-      return '<span class="badge text-bg-secondary" title="მოლოდინში">pending</span>';
+      return '<span class="badge text-bg-secondary" title="უცნობი სტატუსი">unknown</span>';
   }
 }
 
-// როცა რომელიმე ივენთი running სტატუსშია, სია ავტომატურად ახლდება.
+// როცა რომელიმე ივენთი waiting/running სტატუსშია, სია ავტომატურად ახლდება.
 function scheduleRunningStatusPoll(shouldPoll) {
   if (statusPollTimer) {
     clearTimeout(statusPollTimer);
@@ -150,7 +154,7 @@ async function regenerateShakeMap(button) {
       }
     }
 
-    eventsStatus.textContent = `ShakeMap წარმატებით დაგენერირდა (${seiscompOid}).`;
+    eventsStatus.textContent = payload?.message || `ShakeMap დათვლა რიგში ჩაეშვა (${seiscompOid}).`;
     await loadEvents();
   } catch (error) {
     eventsStatus.textContent = "მოთხოვნა ჩავარდა ShakeMap გენერაციისას.";
@@ -268,7 +272,12 @@ function renderEvents(events) {
             class="btn btn-sm btn-outline-warning ms-2 regenerate-shakemap-btn"
             data-seiscomp-oid="${escapeHtml(event.seiscomp_oid || "")}"
             title="ხელახლა გენერაცია"
-            ${event.seiscomp_oid && event.shakemap_status !== "running" ? "" : "disabled"}
+            ${
+              event.seiscomp_oid &&
+              !["running", "waiting"].includes(event.shakemap_status)
+                ? ""
+                : "disabled"
+            }
           >
             <i class="fas fa-rotate-right"></i>
           </button>
@@ -296,7 +305,9 @@ function renderEvents(events) {
     )
     .join("");
 
-  const hasRunningStatus = sortedEvents.some((event) => event.shakemap_status === "running");
+  const hasRunningStatus = sortedEvents.some((event) =>
+    ["running", "waiting"].includes(event.shakemap_status)
+  );
   eventsStatus.textContent = `ჩაიტვირთა ${sortedEvents.length} ივენთი.`;
   totalEvents.textContent = String(sortedEvents.length);
   lastUpdated.textContent = getLatestCreatedAt(sortedEvents);

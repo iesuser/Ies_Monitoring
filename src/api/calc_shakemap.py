@@ -9,7 +9,7 @@ from flask_jwt_extended import get_jwt_identity
 from src.utils import is_authorized_request
 from src.api.nsmodels import shakemap_ns, shakemap_parser, shakemap_model
 from src.models import SeismicEvent, ShakemapJob
-from src.workers.run_shakemap import run_shakemap_worker
+from src.tasks.shakemap import run_shakemap
 from src.config import Config
 
 SHAKEMAP_BASE_PATH = Config.SHAKEMAP_BASE_PATH
@@ -56,54 +56,55 @@ class RunShakeMap(Resource):
 
             shakemap_job = ShakemapJob.query.filter_by(seiscomp_oid=seiscomp_oid).first()
             user_uuid = get_jwt_identity()
+            if not user_uuid:
+                logger.warning("ShakeMap run denied: seiscomp_oid=%s missing user identity", seiscomp_oid)
+                return {"error": "ShakeMap გაშვებისთვის საჭიროა მომხმარებლის იდენტიფიკაცია."}, 401
             if not shakemap_job:
-                shakemap_job = ShakemapJob(seiscomp_oid=seiscomp_oid, uuid=user_uuid)
+                shakemap_job = ShakemapJob(
+                    seiscomp_oid=seiscomp_oid,
+                    uuid=user_uuid,
+                    status=ShakemapJob.STATUS_WAITING,
+                    started_at=None,
+                    finished_at=None,
+                    error=None,
+                )
                 shakemap_job.create()
+                logger.info("ShakeMap job created: seiscomp_oid=%s", seiscomp_oid)
 
-            if shakemap_job.status == "running":
-                logger.info("ShakeMap run failed: seiscomp_oid=%s already running", seiscomp_oid)
-                return {"error": f"მოვლენა უკვე გამშვებია: {seiscomp_oid}"}, 400
-
-            shakemap_job.status = "running"
-            shakemap_job.started_at = datetime.now(timezone.utc)
-            shakemap_job.save()
-
-            parsed_data = {
-                "seiscomp_oid": seiscomp_oid,
-                "time": event.origin_time.isoformat(),
-                "longitude": event.longitude,
-                "latitude": event.latitude,
-                "depth": event.depth,
-                "ml": event.ml,
-                "desc": event.region_ge or "მოვლენის აღწერა"
-            }
-
-            # --- ShakeMap worker-ის გაშვება ---
-            result = run_shakemap_worker(parsed_data)
-            # --- წარმატებული დათვლის შემდეგ სტატუსის განახლება ---
-            shakemap_job.status = "generated"
-            shakemap_job.finished_at = datetime.now(timezone.utc)
-            shakemap_job.save()
-
-            # --- მოვლენის შენახვა ---
-            event.save()
-            logger.info("ShakeMap run success: seiscomp_oid=%s", seiscomp_oid)
-            
-            # --- შედეგის დაბრუნება ---
-            return result, 200
-        except ValueError as e:
-            shakemap_job = SeismicEvent.query.filter_by(seiscomp_oid=seiscomp_oid).first()
-            if shakemap_job:
-                shakemap_job.status = "failed"
-                shakemap_job.finished_at = datetime.now(timezone.utc)
+            elif shakemap_job.status in (
+                ShakemapJob.STATUS_RUNNING,
+                ShakemapJob.STATUS_WAITING
+            ):
+                logger.info("ShakeMap run skipped: seiscomp_oid=%s already queued/running", seiscomp_oid)
+                return {"error": f"მოვლენა უკვე რიგშია ან მიმდინარეობს: {seiscomp_oid}"}, 409
+            else:
+                # დასრულებული/failed job-ის ხელახლა გაშვებისას ისევ რიგში ჩავსვათ.
+                shakemap_job.status = ShakemapJob.STATUS_WAITING
+                shakemap_job.started_at = None
+                shakemap_job.finished_at = None
+                shakemap_job.error = None
+                shakemap_job.uuid = user_uuid
                 shakemap_job.save()
-            logger.info("ShakeMap run failed: seiscomp_oid=%s value error=%s", seiscomp_oid, e)
-            return {"error": str(e)}, 404
+
+            # --- Celery queue-ში დამატება ---
+            async_result = run_shakemap.delay(shakemap_job.id)
+            shakemap_job.celery_task_id = async_result.id
+            shakemap_job.save()
+
+            logger.info("ShakeMap queued: seiscomp_oid=%s task_id=%s", seiscomp_oid, async_result.id)
+            return {
+                "status": "waiting",
+                "message": "დათვლა რიგში ჩაეშვა.",
+                "seiscomp_oid": seiscomp_oid,
+                "job_id": shakemap_job.id,
+                "task_id": async_result.id,
+            }, 202
         except Exception as e:
             shakemap_job = ShakemapJob.query.filter_by(seiscomp_oid=seiscomp_oid).first()
             if shakemap_job:
-                shakemap_job.status = "failed"
+                shakemap_job.status = ShakemapJob.STATUS_FAILED
                 shakemap_job.finished_at = datetime.now(timezone.utc)
+                shakemap_job.error = str(e)
                 shakemap_job.save()
             logger.exception("ShakeMap run exception: seiscomp_oid=%s", seiscomp_oid)
             return {

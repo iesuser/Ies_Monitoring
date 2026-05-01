@@ -52,11 +52,7 @@ celery -A src.celery_app.celery_app worker --loglevel=info --concurrency=2
 შექმენი:
 sudo nano /etc/systemd/system/ies_monitoring_celery.service
 
-ჩასვი:
-
-[Service]
-
-ExecStart=/var/www/Ies_Monitoring-main/venv/bin/celery -A src.celery_app.celery_app worker --loglevel=info --concurrency=2
+გადაიტანე შემდეგი კონფიგურაცია რომელიც მოცემულია ies_monitoring_celery.service-ში.
 
 6) systemd აქტივაცია
 --------------------
@@ -71,4 +67,5 @@ journalctl -u ies_monitoring_celery -f
 
 8) სწრაფი შემოწმება
 -------------------
-python -c "from src.celery_app import celery_app; print(celery_app.broker_connection().as_uri())"
+შემოწმება რომ კონფიგურაცია მოქმედია:
+python -c "from src.celery_app import celery; print(celery.broker_connection().as_uri())"

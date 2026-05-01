@@ -7,9 +7,27 @@ celery = Celery(
     backend=os.getenv("CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/1"),
 )
 
+
+class FlaskTask(celery.Task):
+    """Celery task wrapper Flask app_context-ით (lazy init)."""
+
+    _flask_app = None
+
+    def __call__(self, *args, **kwargs):
+        if self._flask_app is None:
+            # Lazy import/init, რომ მოდულის ჩატვირთვისას არ გაჩნდეს ციკლური import.
+            from src import create_app
+
+            self._flask_app = create_app()
+        with self._flask_app.app_context():
+            return super().__call__(*args, **kwargs)
+
+
+celery.Task = FlaskTask
+
 celery.conf.update(
     task_track_started=True,
-    worker_concurrency=2,  # მაქსიმუმ 2 job ერთდროულად
+    worker_concurrency=1,  # რიგობრივად ერთი job ერთდროულად
     task_time_limit=600,  # hard timeout: 10 წუთი
     task_soft_time_limit=540,  # soft timeout: 9 წუთი
     worker_prefetch_multiplier=1,
@@ -18,3 +36,6 @@ celery.conf.update(
 )
 
 celery.autodiscover_tasks(["src.tasks"])
+
+# Backward compatibility: systemd/conf-ში გამოყენებული სახელი.
+celery_app = celery
