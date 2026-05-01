@@ -7,6 +7,7 @@ from src.models.base import BaseModel
 class ShakemapJob(db.Model, BaseModel):
     __tablename__ = "shakemap_jobs"
 
+    STATUS_WAITING = "waiting"
     STATUS_PENDING = "pending"
     STATUS_RUNNING = "running"
     STATUS_GENERATED = "generated"
