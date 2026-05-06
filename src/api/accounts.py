@@ -100,6 +100,7 @@ class AccountsListApi(Resource):
                     "is_admin": user.role.is_admin if user.role else False,
                     "can_users": user.role.can_users if user.role else False,
                     "can_shakemap": user.role.can_shakemap if user.role else False,
+                    "can_events": user.role.can_events if user.role else False,
                 } if user.role else None,
             }
             for user in users
@@ -190,6 +191,7 @@ class RolesListApi(Resource):
             is_admin=args.get('is_admin', False),
             can_users=args.get('can_users', False),
             can_shakemap=args.get('can_shakemap', False),
+            can_events=args.get('can_events', False),
         )
         
         # ახალი როლის ბაზაში შენახვა
@@ -247,7 +249,8 @@ class RolesAPI(Resource):
             role.can_users = args['can_users']
         if args['can_shakemap'] is not None:
             role.can_shakemap = args['can_shakemap']
-
+        if args['can_events'] is not None:
+            role.can_events = args['can_events']
         role.save()
         logger.info("Update role success: role_id=%s", role_id)
         return {"message": f"როლი წარმატებით განახლდა."}, 200

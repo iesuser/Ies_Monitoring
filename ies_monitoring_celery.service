@@ -14,10 +14,7 @@ WorkingDirectory=/var/www/Ies_Monitoring-main
 EnvironmentFile=/var/www/Ies_Monitoring-main/.env
 
 # venv celery
-ExecStart=/var/www/Ies_Monitoring-main/venv/bin/celery \
-    -A src.celery_app.celery_app worker \
-    --loglevel=info \
-    --concurrency=2
+ExecStart=/var/www/Ies_Monitoring-main/venv/bin/celery -A src.celery_app.celery_app worker
 
 Restart=always
 RestartSec=5

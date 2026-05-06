@@ -113,6 +113,12 @@ Swagger-ში ორივე security სქემა აღწერილი
 - `SHAKEMAP_BASE_PATH`
 - `CONDA_EXE=/home/sysop/miniconda3/bin/conda`
 - `SHAKEMAP_CONDA_ENV=shakemap`
+- `REDIS_URL=redis://127.0.0.1:6379/0`
+- `CELERY_BROKER_URL=redis://127.0.0.1:6379/0`
+- `CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/1`
+- `SHAKEMAP_GLOBAL_LOCK_FILE=/tmp/ies_shakemap_calc.lock` (არასავალდებულო, რეკომენდებული)
+
+> შენიშვნა: `CONDA_EXE` და `SHAKEMAP_CONDA_ENV` უნდა იყოს იგივე მნიშვნელობები, რასაც `ies_monitoring_main.service` და `ies_monitoring_celery.service` გარემოში იყენებ.
 
 ### 4) Gunicorn systemd სერვისის გაშვება
 შექმენი/განაახლე `/etc/systemd/system/ies_monitoring_main.service`  
@@ -129,6 +135,23 @@ Swagger-ში ორივე security სქემა აღწერილი
 - პროექტის ლოგები: `logs/*.log`
 
 თუ ნახავ `Missing command: conda`/`sm_create`/`shake`, ნიშნავს service გარემოში PATH/conda არასწორია და უნდა გასწორდეს service `Environment` ნაწილში.
+
+### 6) Celery worker-ის გაშვება (აუცილებელია ShakeMap რიგისთვის)
+შექმენი/განაახლე `/etc/systemd/system/ies_monitoring_celery.service`  
+(Template იხილე `ies_monitoring_celery.service` ფაილში)
+
+შემდეგ:
+- `sudo systemctl daemon-reload`
+- `sudo systemctl enable ies_monitoring_celery`
+- `sudo systemctl restart ies_monitoring_celery`
+- `sudo systemctl status ies_monitoring_celery`
+
+### 7) Celery ლოგების მონიტორინგი
+- `journalctl -u ies_monitoring_celery -f`
+
+### 8) Celery სწრაფი შემოწმება
+- `python -c "from src.celery_app import celery; print(celery.broker_connection().as_uri())"`
+- status endpoint/UI-დან შეამოწმე, რომ ახალი ShakeMap მოთხოვნა გადადის `waiting -> running -> generated/failed`.
 
 ---
 

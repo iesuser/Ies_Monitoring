@@ -26,6 +26,7 @@ roles_model = accounts_ns.model('Roles', {
     'is_admin': fields.Boolean(description='Admin Privileges'),
     'can_users': fields.Boolean(description='Permission to manage users'),
     'can_shakemap': fields.Boolean(description='Permission to manage Shakemap'),
+    'can_events': fields.Boolean(description='Permission to manage Events'),
 })
 
 
@@ -35,6 +36,7 @@ roles_parser.add_argument('name', type=str, required=False, help='Role name')
 roles_parser.add_argument('is_admin', type=inputs.boolean, required=False, help='Admin Privileges')
 roles_parser.add_argument('can_users', type=inputs.boolean, required=False, help='Manage Users')
 roles_parser.add_argument('can_shakemap', type=inputs.boolean, required=False, help='Manage Shakemap')
+roles_parser.add_argument('can_events', type=inputs.boolean, required=False, help='Manage Events')
 
 accounts_model = api.model('Accounts', {
         'uuid': fields.String(description='The unique UUID of the user'),

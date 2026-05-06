@@ -2,11 +2,12 @@ import logging
 
 from flask_restx import Resource
 from flask import request
+from flask_jwt_extended import get_jwt_identity
 import datetime
 
 from src.api.nsmodels import event_ns, event_model, event_parser
-from src.utils import is_authorized_request
-from src.models import SeismicEvent
+from src.utils import is_authorized_request, have_permission
+from src.models import SeismicEvent, User
 from src.config import Config
 
 logger = logging.getLogger("app.events")
@@ -43,7 +44,11 @@ class SeismicListAPI(Resource):
         # --- ავტორიზაციის შემოწმება ---
         if not is_authorized_request():
             logger.warning("Event upsert denied: unauthorized")
-            return {'error': 'არ გაქვს წვდომა. არ ხართ ავტორიზირებული.'}, 401
+            return {'error': 'არ გაქვს წვდომა. მიუთითე სწორი X-API-Key ან JWT ტოკენი.'}, 401
+        # --- უფლების შემოწმება ---
+        if not have_permission("can_events"):
+            logger.warning("Event upsert denied: missing can_events permission")
+            return {'error': 'არ გაქვს უფლება მიწისძვრის დამატებისთვის.'}, 403
 
         # --- მოთხოვნის body-ის დამუშავება ---
         args = event_parser.parse_args()
@@ -123,6 +128,9 @@ class SeismicEventAPI(Resource):
         if not is_authorized_request():
             logger.warning("Event update denied: event_id=%s unauthorized", event_id)
             return {'error': 'არ გაქვს წვდომა. არ ხართ ავტორიზირებული.'}, 401
+        if not have_permission("can_events"):
+            logger.warning("Event update denied: event_id=%s missing can_events permission", event_id)
+            return {'error': 'არ გაქვს უფლება მიწისძვრის რედაქტირებისთვის.'}, 403
 
         args = event_parser.parse_args()
         body_event_id = args.get("event_id")
@@ -160,12 +168,15 @@ class SeismicEventAPI(Resource):
         logger.info("Event updated via PUT: event_id=%s", event_id)
         return {'message': f'მიწისძვრის მოვლენა წარმატებით განახლდა: {event_id}'}, 200
 
-    @event_ns.doc(security='ApiKeyAuth', description='Delete a seismic event by event_id (requires X-API-Key)')
+    @event_ns.doc(security='JsonWebToken', description='Delete a seismic event by event_id (requires JWT Bearer token)')
     def delete(self, event_id):
-        """შლის მიწისძვრის მოვლენას event_id-ით (არსებული მომხმარებელი უნდა იყოს ავტორიზირებული)."""
+        """შლის მიწისძვრის მოვლენას event_id-ით (მომხმარებელი უნდა იყოს ავტორიზირებული)."""
         if not is_authorized_request():
             logger.warning("Event delete denied: event_id=%s unauthorized", event_id)
-            return {'error': 'არ გაქვს წვდომა. არ ხართ ავტორიზირებული.'}, 401
+            return {'error': 'არ გაქვს წვდომა. მიუთითე სწორი JWT ტოკენი.'}, 401
+        if not have_permission("can_events"):
+            logger.warning("Event delete denied: event_id=%s missing can_events permission", event_id)
+            return {'error': 'არ გაქვს უფლება მიწისძვრის წაშლისთვის.'}, 403
 
         event = SeismicEvent.query.filter_by(event_id=event_id).first()
         if not event:

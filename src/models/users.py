@@ -53,6 +53,7 @@ class Role(db.Model, BaseModel):
     is_admin = db.Column(db.Boolean, default=False)
     can_users = db.Column(db.Boolean, default=False)
     can_shakemap = db.Column(db.Boolean, default=False)
+    can_events = db.Column(db.Boolean, default=False)
 
     # One-to-Many relationship with User
     users = db.relationship('User', back_populates='role')

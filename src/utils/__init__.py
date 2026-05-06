@@ -1,1 +1,1 @@
-from src.utils.auth_utils import is_authorized_request
+from src.utils.auth_utils import is_authorized_request, have_permission

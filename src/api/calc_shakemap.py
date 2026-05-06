@@ -6,7 +6,7 @@ from flask_restx import Resource
 from flask import request, send_file
 from flask_jwt_extended import get_jwt_identity
 
-from src.utils import is_authorized_request
+from src.utils import is_authorized_request, have_permission
 from src.api.nsmodels import shakemap_ns, shakemap_parser, shakemap_model
 from src.models import SeismicEvent, ShakemapJob
 from src.tasks.shakemap import run_shakemap
@@ -55,10 +55,16 @@ class RunShakeMap(Resource):
                 return {"error": f"მოვლენა ვერ მოიძებნა: {seiscomp_oid}"}, 404
 
             shakemap_job = ShakemapJob.query.filter_by(seiscomp_oid=seiscomp_oid).first()
-            user_uuid = get_jwt_identity()
-            if not user_uuid:
-                logger.warning("ShakeMap run denied: seiscomp_oid=%s missing user identity", seiscomp_oid)
-                return {"error": "ShakeMap გაშვებისთვის საჭიროა მომხმარებლის იდენტიფიკაცია."}, 401
+            api_key = request.headers.get("X-API-Key")
+            is_api_key_request = bool(api_key and api_key == Config.API_KEY)
+            user_uuid = "API_USER" if is_api_key_request else get_jwt_identity()
+
+            # --- უფლების შემოწმება ---
+            if not is_api_key_request:
+                if not have_permission("can_shakemap"):
+                    logger.warning("ShakeMap run denied: seiscomp_oid=%s missing can_shakemap permission", seiscomp_oid)
+                    return {'error': 'არ გაქვს უფლება ShakeMap გაშვებისთვის.'}, 403
+            
             if not shakemap_job:
                 shakemap_job = ShakemapJob(
                     seiscomp_oid=seiscomp_oid,
