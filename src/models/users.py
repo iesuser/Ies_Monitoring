@@ -67,6 +67,7 @@ class Role(db.Model, BaseModel):
             "is_admin": self.is_admin,
             "can_users": self.can_users,
             "can_shakemap": self.can_shakemap,
+            "can_events": self.can_events,
 
         }
 
