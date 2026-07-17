@@ -33,3 +33,9 @@ Real-time earthquake notification platform for Android and iOS devices.
 - [System Design](docs/04-system-design.md)
 - [Authentication Design](docs/05-authentication-design.md)
 - [Accounts and Permissions Design](docs/06-accounts-and-permissions-design.md)
+- [Notification Design](docs/07-notification-design.md)
+- [Backend Setup](docs/08-backend-setup.md)
+
+## Backend Quick Start
+
+Backend გაშვების სრული ინსტრუქცია: [`docs/08-backend-setup.md`](docs/08-backend-setup.md)

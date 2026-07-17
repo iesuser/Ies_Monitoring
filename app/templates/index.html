@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}
+IES Monitoring | Home
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+
+  <div class="row align-items-center mb-4">
+    <div class="col-md-7">
+      <h1 class="display-5 fw-bold">IES Monitoring</h1>
+      <p class="lead text-muted mt-3">
+        Real-time earthquake notification and monitoring platform for
+        seismic event processing, alert delivery, and operational visibility.
+      </p>
+      <p class="text-muted mb-0">
+        The platform connects SeisComP ingestion, background processing,
+        permissions-based access control, and mobile push notifications.
+      </p>
+
+      <div class="mt-4">
+        <a href="/docs" class="btn btn-primary btn-lg me-2">
+          Open API Docs
+        </a>
+      </div>
+    </div>
+
+    <div class="col-md-5 text-center d-none d-md-block">
+      <img
+        src="{{ url_for('static', filename='images/earthquakes.png') }}"
+        class="img-fluid"
+        style="max-height: 260px;"
+        alt="Earthquake"
+      >
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="card-title">What We Build</h5>
+          <p class="card-text text-muted">
+            We ingest and process seismic events, then deliver alerts to users
+            through reliable notification channels.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="card-title">How It Works</h5>
+          <p class="card-text text-muted">
+            Event data flows through API, queue, worker, and delivery services
+            with auditable authentication and permission checks.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="card-title">Why It Matters</h5>
+          <p class="card-text text-muted">
+            A unified operational layer improves response time, consistency,
+            and reliability during seismic incidents.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <h5 class="card-title mb-3">Platform Flow</h5>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="p-3 bg-light rounded h-100">
+            <div class="fw-semibold">1) Ingest</div>
+            <div class="small text-muted mt-1">
+              Receive earthquake events from SeisComP and internal ingestion endpoints.
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-3 bg-light rounded h-100">
+            <div class="fw-semibold">2) Authorize</div>
+            <div class="small text-muted mt-1">
+              Enforce JWT authentication, permission validation, and payload checks.
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-3 bg-light rounded h-100">
+            <div class="fw-semibold">3) Process</div>
+            <div class="small text-muted mt-1">
+              Execute asynchronous processing with workers and queue-backed jobs.
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-3 bg-light rounded h-100">
+            <div class="fw-semibold">4) Deliver</div>
+            <div class="small text-muted mt-1">
+              Send notifications through FCM/APNs and expose operational APIs.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
