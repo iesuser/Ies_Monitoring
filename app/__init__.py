@@ -1,13 +1,14 @@
 from flask import Flask, render_template
 
 from app.config import get_config
-
+from app.commands import init_db, populate_db
+from app.views import auth_blueprint
 from app.extensions import db, migrate, jwt, api as restx_api
 from app import api as api_package # ensure namespaces are imported
 
 # Register blueprints
-BLUEPRINTS = []
-COMMANDS = []
+BLUEPRINTS = [auth_blueprint]
+COMMANDS = [init_db, populate_db]
 
 
 def create_app():
@@ -19,6 +20,8 @@ def create_app():
         return render_template("index.html")
     
     register_extensions(app)
+    register_blueprints(app)
+    register_commands(app)
 
     # Register error handlers
     register_error_handlers(app)
