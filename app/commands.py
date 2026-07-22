@@ -1,11 +1,9 @@
 from flask.cli import with_appcontext
 from flask import current_app
 import click
-from datetime import datetime
-import os
 
 from app.extensions import db
-from app.models import User, Permission
+from app.models import User, Permission, UserPermission
 
 # --- Core logic (გამოსაყენებელი როგორც CLI-დან, ისე ტესტებიდან) ---
 
@@ -28,26 +26,59 @@ def init_db_core():
     db.create_all()
 
 def populate_db_core():
+    click.echo("Ensuring permission exists...")
+    permission = Permission.query.filter_by(code="can_permissions").first()
+    if not permission:
+        permission = Permission(
+            code="can_permissions",
+            name="Permissions Management",
+            description="Manage and assign permissions to any user.",
+            is_active=True,
+        )
+        permission.create()
+        click.echo("Created permission: can_permissions")
+    elif not permission.is_active:
+        permission.is_active = True
+        permission.deactivated_at = None
+        permission.deactivated_by_user_id = None
+        permission.save()
+        click.echo("Re-activated permission: can_permissions")
 
-    click.echo("Creating Permissions")
-    permissions = Permission(
-        name="admin",
-        description="Admin permissions",
-        can_users=True,
-        can_shakemap=True,
-        can_events=True
-    )
-    permissions.create()
+    click.echo("Ensuring admin user exists...")
+    admin_email = "roma.grigalashvili@iliauni.edu.ge"
+    admin_user = User.query.filter_by(email=admin_email).first()
+    if not admin_user:
+        admin_user = User(
+            first_name="Roma",
+            last_name="Grigalashvili",
+            email=admin_email,
+            is_active=True,
+        )
+        admin_user.password = "PASSWORD"
+        admin_user.create()
+        click.echo(f"Created user: {admin_email}")
+    else:
+        click.echo(f"User already exists: {admin_email}")
 
-    click.echo("Creating Admin User")
-    admin_user = User (
-        name="Roma",
-        lastname="Grigalashvili",
-        email="roma.grigalashvili@iliauni.edu.ge",
-        password="PASSWORD",
-        
-    )
-    admin_user.create()
+    click.echo("Ensuring user permission assignment exists...")
+    assignment = UserPermission.query.filter_by(
+        user_id=admin_user.id,
+        permission_id=permission.id,
+        degranted_at=None,
+    ).first()
+
+    if not assignment:
+        assignment = UserPermission(
+            user_id=admin_user.id,
+            permission_id=permission.id,
+            granted_by_user_id=admin_user.id,
+        )
+        assignment.create()
+        click.echo("Assigned can_permissions to admin user.")
+    else:
+        click.echo("Permission already assigned to admin user.")
+
+    User.save()
 
 
 # --- Click CLI commands (thin wrappers around core logic) ---
