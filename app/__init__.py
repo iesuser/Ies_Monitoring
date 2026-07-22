@@ -33,11 +33,25 @@ def register_extensions(app):
     # Flask-Migrate
     migrate.init_app(app, db)
 
-    # Flask-RESTX (attach namespaces defined in src/api)
+    # Flask-RESTX (attach namespaces defined in app/api)
     restx_api.init_app(app)
 
     # Flask-JWT-Extended
     jwt.init_app(app)
+    register_jwt_callbacks()
+
+
+def register_jwt_callbacks():
+    """Wire JWT identity lookup to the User model."""
+
+    @jwt.user_lookup_loader
+    def user_lookup_callback(_jwt_header, jwt_data):
+        from app.models import User
+
+        identity = jwt_data.get("sub")
+        if not identity:
+            return None
+        return User.query.filter_by(uuid=identity, is_active=True).first()
 
 def register_blueprints(app):
     for blueprint in BLUEPRINTS:

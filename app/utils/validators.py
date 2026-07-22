@@ -3,27 +3,35 @@ import re
 
 
 def validate_password(password: str) -> None:
-    """Validate password policy and raise ValueError on invalid input."""
+    """Validate password policy and raise ValueError on invalid input.
+
+    Policy (docs/05): min 12 chars, at least 1 upper, 1 lower, 1 digit, 1 special.
+    """
     if not isinstance(password, str) or not password:
         raise ValueError("პაროლი სავალდებულოა.")
 
-    if len(password) < 8:
-        raise ValueError("პაროლი უნდა იყოს მინიმუმ 8 სიმბოლო.")
+    if len(password) < 12:
+        raise ValueError("პაროლი უნდა იყოს მინიმუმ 12 სიმბოლო.")
 
     contains_uppercase = False
     contains_lowercase = False
     contains_digits = False
+    contains_special = False
     allowed_characters = set(ascii_lowercase + ascii_uppercase + digits + punctuation)
 
     for character in password:
         if character not in allowed_characters:
-            raise ValueError("პაროლი შეიძლება შეიცავდეს მხოლოდ ინგლისურ ასოებს, ციფრებს და სიმბოლოებს !@#$%^&*")
+            raise ValueError(
+                "პაროლი შეიძლება შეიცავდეს მხოლოდ ინგლისურ ასოებს, ციფრებს და სიმბოლოებს !@#$%^&*"
+            )
         if character in ascii_uppercase:
             contains_uppercase = True
         elif character in ascii_lowercase:
             contains_lowercase = True
         elif character in digits:
             contains_digits = True
+        elif character in punctuation:
+            contains_special = True
 
     if not contains_uppercase:
         raise ValueError("პაროლი უნდა შეიცავდეს მინიმუმ ერთ დიდ ასოს.")
@@ -31,6 +39,8 @@ def validate_password(password: str) -> None:
         raise ValueError("პაროლი უნდა შეიცავდეს მინიმუმ ერთ პატარა ასოს.")
     if not contains_digits:
         raise ValueError("პაროლი უნდა შეიცავდეს მინიმუმ ერთ ციფრს.")
+    if not contains_special:
+        raise ValueError("პაროლი უნდა შეიცავდეს მინიმუმ ერთ სპეციალურ სიმბოლოს.")
 
 
 def normalize_ge_phone(phone: str) -> str:

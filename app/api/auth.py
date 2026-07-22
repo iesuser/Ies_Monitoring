@@ -1,75 +1,117 @@
 import logging
-from flask import jsonify
-from flask_restx import Resource
+from datetime import datetime
+
+from flask import current_app, jsonify
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
-    jwt_required,
-    get_jwt_identity,
     current_user,
+    get_jwt_identity,
+    jwt_required,
     set_refresh_cookies,
-    unset_refresh_cookies,
+    unset_jwt_cookies,
 )
+from flask_restx import Resource
 
+from app.api.nsmodels import auth_ns, auth_parser, registration_parser
 from app.models import User
-from app.api.nsmodels import auth_ns, registration_parser, auth_parser
-from app.utils import validate_password, normalize_email
+from app.utils import normalize_email, validate_password
 
 logger = logging.getLogger("app.auth")
 
 
-@auth_ns.route('/registration')
-@auth_ns.doc(responses={200: 'OK', 400: 'Invalid Argument', 401: 'JWT Token Expires', 403: 'Forbidden', 404: 'Not Found'})
+def _access_token_expires_in():
+    expires = current_app.config.get("JWT_ACCESS_TOKEN_EXPIRES")
+    if expires is None:
+        return None
+    return int(expires.total_seconds())
+
+
+def _build_login_response(user):
+    access_token = create_access_token(identity=user.uuid)
+    refresh_token = create_refresh_token(identity=user.uuid)
+
+    response = jsonify(
+        {
+            "access_token": access_token,
+            "token_type": "Bearer",
+            "expires_in": _access_token_expires_in(),
+        }
+    )
+    set_refresh_cookies(response, refresh_token)
+    return response
+
+
+@auth_ns.route("/register")
+@auth_ns.doc(
+    responses={
+        200: "OK",
+        400: "Invalid Argument",
+        401: "Unauthorized",
+        403: "Forbidden",
+    }
+)
 class RegistrationApi(Resource):
     @jwt_required()
     @auth_ns.doc(parser=registration_parser)
-    @auth_ns.doc(security='JsonWebToken')
+    @auth_ns.doc(security="JsonWebToken")
     def post(self):
-        
-        # ვამოწმებთ, აქვს თუ არა მიმდინარე მომხმარებელს ახალი ანგარიშის რეგისტრაციის უფლება.
-        if not (current_user.check_permission('is_admin') or current_user.check_permission('can_users')):
-            logger.warning("Registration denied: actor_uuid=%s missing permissions", current_user.uuid)
-            return {"error": "You do not have permission to register users."}, 403
-
+        if not current_user.check_permission("can_users"):
+            logger.warning(
+                "Registration denied: actor_uuid=%s missing can_users",
+                current_user.uuid,
+            )
+            return {"error": "forbidden", "message": "Missing required permission: can_users"}, 403
 
         args = registration_parser.parse_args()
+
         try:
             normalized_email = normalize_email(args["email"])
         except ValueError as err:
             logger.info("Registration failed: invalid email format")
-            return {"error": str(err)}, 400
+            return {"error": "validation_error", "message": str(err)}, 400
 
-        # ვამოწმებთ, ემთხვევა თუ არა პაროლის წესებს და განმეორებით შეყვანას.
+        first_name = (args.get("first_name") or "").strip()
+        last_name = (args.get("last_name") or "").strip()
+        if not first_name or not last_name:
+            return {
+                "error": "validation_error",
+                "message": "first_name and last_name are required.",
+            }, 400
+
         if args["password"] != args["passwordRepeat"]:
             logger.info("Registration failed: email=%s password mismatch", normalized_email)
-            return {"error": "Passwords do not match."}, 400
+            return {"error": "validation_error", "message": "Passwords do not match."}, 400
 
         try:
             validate_password(args["password"])
         except ValueError as err:
             logger.info("Registration failed: email=%s password policy error", normalized_email)
-            return {"error": str(err)}, 400
+            return {"error": "validation_error", "message": str(err)}, 400
 
         if User.query.filter_by(email=normalized_email).first():
             logger.info("Registration failed: email=%s already exists", normalized_email)
-            return {"error": "Email address is already registered."}, 400
-
-
+            return {
+                "error": "conflict",
+                "message": "Email address is already registered.",
+            }, 400
 
         new_user = User(
-            name=args["name"],
+            first_name=first_name,
+            last_name=last_name,
             email=normalized_email,
-            password=args["password"]
+            password=args["password"],
+            created_by_user_id=current_user.id,
+            updated_by_user_id=current_user.id,
         )
-
         new_user.create()
-        logger.info("Registration success: email=%s", normalized_email)
+        logger.info("Registration success: email=%s actor_uuid=%s", normalized_email, current_user.uuid)
 
-        return {"message": "User registered successfully."}, 200
-    
-@auth_ns.route('/login')
+        return {"message": "User registered successfully.", "user": new_user.to_dict()}, 200
+
+
+@auth_ns.route("/login")
 class AuthorizationApi(Resource):
-
     @auth_ns.doc(parser=auth_parser)
     def post(self):
         try:
@@ -78,72 +120,45 @@ class AuthorizationApi(Resource):
             try:
                 normalized_email = normalize_email(args["email"])
             except ValueError:
-                return {
-                    "error": "Invalid email or password."
-                }, 400
+                return {"error": "invalid_credentials", "message": "Invalid email or password."}, 400
 
             user = User.query.filter_by(email=normalized_email).first()
             if not user or not user.check_password(args["password"]):
-                return {
-                    "error": "Invalid email or password."
-                }, 400
+                return {"error": "invalid_credentials", "message": "Invalid email or password."}, 400
 
-            if not user.role:
-                logger.warning("Login denied: user_uuid=%s has no role", user.uuid)
-                return {"error": "User role not found."}, 403
+            if not user.is_active:
+                logger.warning("Login denied: user_uuid=%s is inactive", user.uuid)
+                return {"error": "forbidden", "message": "User account is inactive."}, 403
 
-            permissions = user.role.get_permissions()
-            access_token = create_access_token(
-                identity=user.uuid,
-                additional_claims={
-                    "role": user.role.name,
-                    "permissions": permissions
-                }
-            )
-            refresh_token = create_refresh_token(identity=user.uuid)
+            user.last_login_at = datetime.now()
+            user.save()
 
-            response = jsonify({
-                "message": "Authorization successful.",
-                "access_token": access_token
-            })
-            set_refresh_cookies(response, refresh_token)
-            return response
+            return _build_login_response(user)
         except Exception:
             logger.exception("Login failed with unexpected error")
-            return {"error": "Internal error occurred during authorization."}, 500
+            return {"error": "internal_error", "message": "Internal error occurred during authorization."}, 500
 
-@auth_ns.route('/refresh')
+
+@auth_ns.route("/refresh")
 class AccessTokenRefreshApi(Resource):
-
     @jwt_required(refresh=True)
     def post(self):
         identity = get_jwt_identity()
         user = User.query.filter_by(uuid=identity).first()
         if not user:
-            return {"error": "User not found."}, 404
-        if not user.role:
-            return {"error": "User role not found."}, 403
+            return {"error": "not_found", "message": "User not found."}, 404
+        if not user.is_active:
+            return {"error": "forbidden", "message": "User account is inactive."}, 403
 
-        permissions = user.role.get_permissions()
-        access_token = create_access_token(
-            identity=user.uuid,
-            additional_claims={
-                "role": user.role.name,
-                "permissions": permissions
-            }
-        )
+        # Cookie rotation: issue a new refresh cookie alongside the new access token.
+        # Full DB-backed revoke/replay protection lands with the refresh_tokens model.
+        response = _build_login_response(user)
+        return response
 
-        return {"access_token": access_token}, 200
 
-@auth_ns.route('/logout')
+@auth_ns.route("/logout")
 class LogoutApi(Resource):
-
     def post(self):
-
-        response = jsonify({
-            "message": "logout success"
-        })
-
-        unset_refresh_cookies(response)
-
+        response = jsonify({"message": "logout success"})
+        unset_jwt_cookies(response)
         return response
