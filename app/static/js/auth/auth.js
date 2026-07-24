@@ -1,5 +1,6 @@
 async function login(event) {
     event.preventDefault();  // Prevent the form from submitting
+    const i18n = window.I18n;
 
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -11,7 +12,7 @@ async function login(event) {
     };
 
     try {
-        const response = await fetch('/api/login', {
+        const response = await fetch('/api/auth/login', {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -26,7 +27,7 @@ async function login(event) {
             data = await response.json();
         } else {
             const textPayload = await response.text();
-            throw new Error(textPayload || 'Login response was not returned as JSON.');
+            throw new Error(textPayload || (i18n ? i18n.t('alerts.auth_error', 'An error occurred during authorization.') : 'An error occurred during authorization.'));
         }
 
         if (data.access_token) {
@@ -34,13 +35,14 @@ async function login(event) {
             localStorage.setItem('access_token', data.access_token);
 
             // Redirect to home page
-            window.location.href = '/';
+            const i18n = window.I18n;
+            window.location.href = i18n ? i18n.localizePath('/') : '/';
         } else {
-            showAlert('alertPlaceholder', 'danger', data.error || 'Invalid authorization.');
+            showAlert('alertPlaceholder', 'danger', data.error || (i18n ? i18n.t('alerts.invalid_auth', 'Invalid authorization.') : 'Invalid authorization.'));
         }
     } catch (error) {
         console.error('Error:', error);
-        showAlert('alertPlaceholder', 'danger', 'An error occurred during authorization.');
+        showAlert('alertPlaceholder', 'danger', i18n ? i18n.t('alerts.auth_error', 'An error occurred during authorization.') : 'An error occurred during authorization.');
     }
 }
 

@@ -1,0 +1,55 @@
+.navbar .navbar-brand {
+    letter-spacing: 0.2px;
+}
+
+.language-switcher .btn.active {
+    color: #fff;
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+.navbar .offcanvas {
+    width: min(82vw, 320px);
+}
+
+.navbar .navbar-nav .nav-link {
+    border-radius: 0.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+@media (max-width: 991.98px) {
+    .navbar .offcanvas-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .navbar #navLinksEnd .btn,
+    .navbar #navLinksEnd .nav-item,
+    .navbar #navLinksStart .nav-item {
+        width: 100%;
+    }
+
+    .navbar #navLinksEnd .btn {
+        justify-content: center;
+    }
+}
+
+#resetPasswordModal .modal-content {
+    border: 0;
+    border-radius: 1rem;
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 575.98px) {
+    #resetPasswordModal .modal-dialog {
+        margin: 0.75rem;
+    }
+
+    #resetPasswordModal .modal-body,
+    #resetPasswordModal .modal-header {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}

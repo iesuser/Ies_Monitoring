@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, g, redirect, render_template, request, url_for
 
 from app.config import get_config
 from app.commands import init_db, populate_db
@@ -9,6 +9,8 @@ from app import api as api_package # ensure namespaces are imported
 # Register blueprints
 BLUEPRINTS = [auth_blueprint]
 COMMANDS = [init_db, populate_db]
+SUPPORTED_LANGS = {"en", "ka"}
+DEFAULT_LANG = "en"
 
 
 def create_app():
@@ -17,7 +19,18 @@ def create_app():
 
     @app.route("/")
     def home():
-        return render_template("index.html")
+        preferred = request.cookies.get("lang")
+        if preferred not in SUPPORTED_LANGS:
+            preferred = DEFAULT_LANG
+        return redirect(url_for("home_localized", lang=preferred))
+
+    @app.route("/<lang>/")
+    def home_localized(lang):
+        if lang not in SUPPORTED_LANGS:
+            return redirect(url_for("home_localized", lang=DEFAULT_LANG))
+        g.current_lang = lang
+        response = render_template("index.html")
+        return response
     
     register_extensions(app)
     register_blueprints(app)
@@ -25,6 +38,7 @@ def create_app():
 
     # Register error handlers
     register_error_handlers(app)
+    register_i18n_helpers(app)
 
     return app
 
@@ -63,6 +77,26 @@ def register_blueprints(app):
 def register_commands(app):
     for command in COMMANDS:
         app.cli.add_command(command)
+
+
+def register_i18n_helpers(app):
+    @app.before_request
+    def set_current_language():
+        maybe_lang = request.view_args.get("lang") if request.view_args else None
+        g.current_lang = maybe_lang if maybe_lang in SUPPORTED_LANGS else DEFAULT_LANG
+
+    @app.context_processor
+    def inject_i18n_context():
+        return {
+            "current_lang": getattr(g, "current_lang", DEFAULT_LANG),
+            "supported_langs": sorted(SUPPORTED_LANGS),
+        }
+
+    @app.after_request
+    def persist_language_cookie(response):
+        lang = getattr(g, "current_lang", DEFAULT_LANG)
+        response.set_cookie("lang", lang, max_age=60 * 60 * 24 * 365, samesite="Lax")
+        return response
 
 # Custom error handler for 404
 def register_error_handlers(app):

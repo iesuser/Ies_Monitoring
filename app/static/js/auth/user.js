@@ -1,8 +1,9 @@
 // Open the modal for editing a User record
 async function openUserModal() {
+    const i18n = window.I18n;
     const token = localStorage.getItem('access_token');
     if (!token) {
-        showAlert('alertPlaceholder', 'danger', 'Session has expired. Please sign in again.');
+        showAlert('alertPlaceholder', 'danger', i18n ? i18n.t('alerts.session_expired', 'Session has expired. Please sign in again.') : 'Session has expired. Please sign in again.');
         clearSessionData();
         return;
     }
@@ -45,7 +46,8 @@ async function openUserModal() {
 
 // Redirect to the accounts page
 function redirectToAccounts() {
-    window.location.href = '/accounts';
+    const i18n = window.I18n;
+    window.location.href = i18n ? i18n.localizePath('/accounts') : '/accounts';
 }
 
 function submitUserForm(event) {
@@ -78,5 +80,6 @@ function submitUserForm(event) {
 }
 
 function changePassword(){
-    window.location.href = '/change_password';
+    const i18n = window.I18n;
+    window.location.href = i18n ? i18n.localizePath('/change_password') : '/change_password';
 }

@@ -9,18 +9,18 @@ IES Monitoring | Home
 
   <div class="row align-items-center mb-4">
     <div class="col-md-7">
-      <h1 class="display-5 fw-bold">IES Monitoring</h1>
-      <p class="lead text-muted mt-3">
+      <h1 class="display-5 fw-bold" data-i18n="index.hero.title">IES Monitoring</h1>
+      <p class="lead text-muted mt-3" data-i18n="index.hero.lead">
         Real-time earthquake notification and monitoring platform for
         seismic event processing, alert delivery, and operational visibility.
       </p>
-      <p class="text-muted mb-0">
+      <p class="text-muted mb-0" data-i18n="index.hero.sub">
         The platform connects SeisComP ingestion, background processing,
         permissions-based access control, and mobile push notifications.
       </p>
 
       <div class="mt-4">
-        <a href="/docs" class="btn btn-primary btn-lg me-2">
+        <a href="/docs" class="btn btn-primary btn-lg me-2" data-i18n="index.hero.docs">
           Open API Docs
         </a>
       </div>
@@ -40,8 +40,8 @@ IES Monitoring | Home
     <div class="col-lg-4">
       <div class="card h-100 shadow-sm border-0">
         <div class="card-body">
-          <h5 class="card-title">What We Build</h5>
-          <p class="card-text text-muted">
+          <h5 class="card-title" data-i18n="index.card.build">What We Build</h5>
+          <p class="card-text text-muted" data-i18n="index.card.build.text">
             We ingest and process seismic events, then deliver alerts to users
             through reliable notification channels.
           </p>
@@ -52,8 +52,8 @@ IES Monitoring | Home
     <div class="col-lg-4">
       <div class="card h-100 shadow-sm border-0">
         <div class="card-body">
-          <h5 class="card-title">How It Works</h5>
-          <p class="card-text text-muted">
+          <h5 class="card-title" data-i18n="index.card.how">How It Works</h5>
+          <p class="card-text text-muted" data-i18n="index.card.how.text">
             Event data flows through API, queue, worker, and delivery services
             with auditable authentication and permission checks.
           </p>
@@ -64,8 +64,8 @@ IES Monitoring | Home
     <div class="col-lg-4">
       <div class="card h-100 shadow-sm border-0">
         <div class="card-body">
-          <h5 class="card-title">Why It Matters</h5>
-          <p class="card-text text-muted">
+          <h5 class="card-title" data-i18n="index.card.why">Why It Matters</h5>
+          <p class="card-text text-muted" data-i18n="index.card.why.text">
             A unified operational layer improves response time, consistency,
             and reliability during seismic incidents.
           </p>
@@ -76,36 +76,36 @@ IES Monitoring | Home
 
   <div class="card shadow-sm border-0">
     <div class="card-body">
-      <h5 class="card-title mb-3">Platform Flow</h5>
+      <h5 class="card-title mb-3" data-i18n="index.flow.title">Platform Flow</h5>
       <div class="row g-3">
         <div class="col-md-3">
           <div class="p-3 bg-light rounded h-100">
-            <div class="fw-semibold">1) Ingest</div>
-            <div class="small text-muted mt-1">
+            <div class="fw-semibold" data-i18n="index.flow.ingest.title">1) Ingest</div>
+            <div class="small text-muted mt-1" data-i18n="index.flow.ingest.text">
               Receive earthquake events from SeisComP and internal ingestion endpoints.
             </div>
           </div>
         </div>
         <div class="col-md-3">
           <div class="p-3 bg-light rounded h-100">
-            <div class="fw-semibold">2) Authorize</div>
-            <div class="small text-muted mt-1">
+            <div class="fw-semibold" data-i18n="index.flow.auth.title">2) Authorize</div>
+            <div class="small text-muted mt-1" data-i18n="index.flow.auth.text">
               Enforce JWT authentication, permission validation, and payload checks.
             </div>
           </div>
         </div>
         <div class="col-md-3">
           <div class="p-3 bg-light rounded h-100">
-            <div class="fw-semibold">3) Process</div>
-            <div class="small text-muted mt-1">
+            <div class="fw-semibold" data-i18n="index.flow.process.title">3) Process</div>
+            <div class="small text-muted mt-1" data-i18n="index.flow.process.text">
               Execute asynchronous processing with workers and queue-backed jobs.
             </div>
           </div>
         </div>
         <div class="col-md-3">
           <div class="p-3 bg-light rounded h-100">
-            <div class="fw-semibold">4) Deliver</div>
-            <div class="small text-muted mt-1">
+            <div class="fw-semibold" data-i18n="index.flow.deliver.title">4) Deliver</div>
+            <div class="small text-muted mt-1" data-i18n="index.flow.deliver.text">
               Send notifications through FCM/APNs and expose operational APIs.
             </div>
           </div>
