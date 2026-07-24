@@ -4,6 +4,7 @@ from app.config import get_config
 from app.commands import init_db, populate_db
 from app.views import auth_blueprint
 from app.extensions import db, migrate, jwt, api as restx_api
+from app.logger import configure_logging
 from app import api as api_package # ensure namespaces are imported
 
 # Register blueprints
@@ -16,6 +17,7 @@ DEFAULT_LANG = "en"
 def create_app():
     app = Flask(__name__)
     app.config.from_object(get_config())
+    configure_logging(app)
 
     @app.route("/")
     def home():
@@ -83,7 +85,20 @@ def register_i18n_helpers(app):
     @app.before_request
     def set_current_language():
         maybe_lang = request.view_args.get("lang") if request.view_args else None
-        g.current_lang = maybe_lang if maybe_lang in SUPPORTED_LANGS else DEFAULT_LANG
+        cookie_lang = request.cookies.get("lang")
+
+        if maybe_lang in SUPPORTED_LANGS:
+            g.current_lang = maybe_lang
+            g.persist_lang_cookie = True
+            return
+
+        if cookie_lang in SUPPORTED_LANGS:
+            g.current_lang = cookie_lang
+            g.persist_lang_cookie = False
+            return
+
+        g.current_lang = DEFAULT_LANG
+        g.persist_lang_cookie = False
 
     @app.context_processor
     def inject_i18n_context():
@@ -94,8 +109,11 @@ def register_i18n_helpers(app):
 
     @app.after_request
     def persist_language_cookie(response):
-        lang = getattr(g, "current_lang", DEFAULT_LANG)
-        response.set_cookie("lang", lang, max_age=60 * 60 * 24 * 365, samesite="Lax")
+        # Persist language only for explicit localized URLs like /en/... or /ka/...
+        # so API and non-localized routes do not accidentally overwrite user preference.
+        if getattr(g, "persist_lang_cookie", False):
+            lang = getattr(g, "current_lang", DEFAULT_LANG)
+            response.set_cookie("lang", lang, max_age=60 * 60 * 24 * 365, samesite="Lax")
         return response
 
 # Custom error handler for 404

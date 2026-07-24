@@ -8,6 +8,20 @@
     border-color: var(--bs-primary);
 }
 
+.language-switcher .language-btn {
+    padding: 0.25rem 0.45rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.language-switcher .language-flag {
+    width: 20px;
+    height: 14px;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
 .navbar .offcanvas {
     width: min(82vw, 320px);
 }
@@ -33,6 +47,10 @@
 
     .navbar #navLinksEnd .btn {
         justify-content: center;
+    }
+
+    .navbar #navLinksEnd .language-switcher .btn {
+        width: auto;
     }
 }
 

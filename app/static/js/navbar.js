@@ -82,7 +82,11 @@ document.addEventListener("DOMContentLoaded", function() {
             iconImg.style.verticalAlign = 'middle';
             profileButton.appendChild(iconImg);
             profileButton.onclick = function() {
-                openUserModal();
+                if (typeof window.openUserModal === "function") {
+                    window.openUserModal();
+                } else {
+                    console.error("openUserModal is not available.");
+                }
             };
             logoutItem.appendChild(profileButton);
             
@@ -140,8 +144,12 @@ document.addEventListener("DOMContentLoaded", function() {
     langItem.className = 'nav-item mt-2 mt-lg-0';
     langItem.innerHTML = `
         <div class="btn-group btn-group-sm language-switcher" role="group" aria-label="Language switcher">
-            <button type="button" class="btn btn-outline-secondary" id="langEn">${i18n ? i18n.t('nav.lang.en', 'EN') : 'EN'}</button>
-            <button type="button" class="btn btn-outline-secondary" id="langKa">${i18n ? i18n.t('nav.lang.ka', 'KA') : 'KA'}</button>
+            <button type="button" class="btn btn-outline-secondary language-btn" id="langEn" aria-label="Switch language to English" title="${i18n ? i18n.t('nav.lang.en', 'EN') : 'EN'}">
+                <img src="/static/images/flag_en.svg" alt="${i18n ? i18n.t('nav.lang.en', 'EN') : 'EN'} flag" class="language-flag">
+            </button>
+            <button type="button" class="btn btn-outline-secondary language-btn" id="langKa" aria-label="Switch language to Georgian" title="${i18n ? i18n.t('nav.lang.ka', 'KA') : 'KA'}">
+                <img src="/static/images/flag_ka.svg" alt="${i18n ? i18n.t('nav.lang.ka', 'KA') : 'KA'} flag" class="language-flag">
+            </button>
         </div>
     `;
     navLinksEnd.appendChild(langItem);

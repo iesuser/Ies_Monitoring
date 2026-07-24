@@ -1,46 +1,94 @@
 // Open the modal for editing a User record
-async function openUserModal() {
-    const i18n = window.I18n;
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-        showAlert('alertPlaceholder', 'danger', i18n ? i18n.t('alerts.session_expired', 'Session has expired. Please sign in again.') : 'Session has expired. Please sign in again.');
+function safeShowAlert(type, message) {
+    if (typeof showAlert === "function") {
+        showAlert("alertPlaceholder", type, message);
+        return;
+    }
+    // Fallback so UX still works if shared alert helper is missing.
+    window.alert(message);
+}
+
+function safeClearSession() {
+    if (typeof clearSessionData === "function") {
         clearSessionData();
         return;
     }
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    const i18n = window.I18n;
+    window.location.href = i18n ? i18n.localizePath("/login") : "/login";
+}
 
-    const emailText = document.getElementById('user_email');
-    const roleText = document.getElementById('user_role');
-    const accountsButton = document.getElementById('accountsButton');
+async function apiRequest(path, options = {}) {
+    const token = localStorage.getItem("access_token");
+    const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+    };
+
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(path, {
+        credentials: "include",
+        ...options,
+        headers,
+    });
+
+    const contentType = response.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+        ? await response.json()
+        : null;
+
+    if (!response.ok) {
+        const errorMessage = data?.message || data?.error || "Request failed.";
+        throw new Error(errorMessage);
+    }
+
+    return data;
+}
+
+async function openUserModal() {
+    const i18n = window.I18n;
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+        safeShowAlert(
+            "danger",
+            i18n ? i18n.t("alerts.session_expired", "Session has expired. Please sign in again.") : "Session has expired. Please sign in again."
+        );
+        safeClearSession();
+        return;
+    }
+
+    const emailText = document.getElementById("user_email");
+    const roleText = document.getElementById("user_role");
+    const accountsButton = document.getElementById("accountsButton");
 
     try {
-        // Use centralized request helper so refresh-token flow is applied automatically.
-        const data = await makeApiRequest('/api/user', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+        const data = await apiRequest("/api/accounts/user", { method: "GET" });
 
         if (!data || data.error) {
-            showAlert('alertPlaceholder', 'danger', data?.error || 'An error occurred while fetching data.');
+            safeShowAlert("danger", data?.error || "An error occurred while fetching data.");
             return;
         }
 
-        document.getElementById('userUUID').value = data.uuid;
-        document.getElementById('user_name').value = data.name;
-        document.getElementById('user_lastname').value = data.lastname;
+        document.getElementById("userUUID").value = data.uuid;
+        document.getElementById("user_name").value = data.first_name || "";
+        document.getElementById("user_lastname").value = data.last_name || "";
         emailText.textContent = data.email;
-        roleText.textContent = data.role_name;
+        roleText.textContent = data.is_active ? "Active" : "Inactive";
 
         if (accountsButton) {
-            accountsButton.style.display = data.role_name === 'Admin' ? 'block' : 'none';
+            // Role-based exposure is not available in current /api/user payload.
+            accountsButton.style.display = "none";
         }
 
-        const modal = new bootstrap.Modal(document.getElementById('UserModal'));
+        const modal = new bootstrap.Modal(document.getElementById("UserModal"));
         modal.show();
     } catch (error) {
-        console.error('Error fetching data:', error);
-        showAlert('alertPlaceholder', 'danger', 'An error occurred while fetching data.');
+        console.error("Error fetching data:", error);
+        safeShowAlert("danger", error.message || "An error occurred while fetching data.");
     }
 }
 
@@ -53,33 +101,55 @@ function redirectToAccounts() {
 function submitUserForm(event) {
     event.preventDefault();
 
-    const formData = new FormData(document.getElementById('UserForm'));
-    const UUIDField = document.getElementById('userUUID').value;
+    const i18n = window.I18n;
+    const payload = {
+        first_name: (document.getElementById("user_name").value || "").trim(),
+        last_name: (document.getElementById("user_lastname").value || "").trim(),
+    };
 
-    const token = localStorage.getItem('access_token');
-
-    // makeApiRequest is in the globalAccessControl.js
-    makeApiRequest(`/api/user/${UUIDField}`, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `Bearer ${token}`
-        },
-        body: formData
+    apiRequest("/api/accounts/user", {
+        method: "PUT",
+        body: JSON.stringify(payload),
     })
-    .then(data => {
-        if (data.error) {
-            closeModal('UserModal')
-            showAlert('alertPlaceholder', 'danger', data.error || 'An error occurred while updating data.');
-        } else {
-            window.location.reload(); // Reload the page to reflect changes
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
+        .then(() => {
+            closeModal("UserModal");
+            window.location.reload();
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            safeShowAlert(
+                "danger",
+                error.message || (i18n ? i18n.t("alerts.request_failed", "Request failed. Please try again.") : "Request failed. Please try again.")
+            );
+        });
 }
 
-function changePassword(){
+function changePassword() {
     const i18n = window.I18n;
-    window.location.href = i18n ? i18n.localizePath('/change_password') : '/change_password';
+    window.location.href = i18n ? i18n.localizePath("/change_password") : "/change_password";
+}
+
+function closeModal(modalId) {
+    const modalElement = document.getElementById(modalId);
+    if (!modalElement) return;
+    const instance = bootstrap.Modal.getInstance(modalElement);
+    if (instance) {
+        instance.hide();
+    } else {
+        const created = new bootstrap.Modal(modalElement);
+        created.hide();
+    }
+}
+
+if (typeof window.openUserModal !== "function") {
+    window.openUserModal = openUserModal;
+}
+if (typeof window.submitUserForm !== "function") {
+    window.submitUserForm = submitUserForm;
+}
+if (typeof window.redirectToAccounts !== "function") {
+    window.redirectToAccounts = redirectToAccounts;
+}
+if (typeof window.changePassword !== "function") {
+    window.changePassword = changePassword;
 }
