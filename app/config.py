@@ -15,6 +15,10 @@ class Config:
     MY_SECRET_KEY = SECRET_KEY
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", SECRET_KEY)
     API_KEY = os.getenv("API_KEY")
+    LOG_DIR = os.getenv("LOG_DIR", path.join(BASE_DIR, "logs"))
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+    LOG_MAX_BYTES = int(os.getenv("LOG_MAX_BYTES", 5 * 1024 * 1024))
+    LOG_BACKUP_COUNT = int(os.getenv("LOG_BACKUP_COUNT", 5))
 
     JWT_TOKEN_LOCATION = ["headers", "cookies"]
     JWT_HEADER_NAME = "Authorization"
