@@ -5,7 +5,12 @@ from app.models.base import BaseModel
 class UserPermission(db.Model, BaseModel):
     __tablename__ = "user_permissions"
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    # SQLite only autoincrements INTEGER PKs; keep BIGINT on MySQL/Postgres.
+    id = db.Column(
+        db.BigInteger().with_variant(db.Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=False, index=True)
     permission_id = db.Column(db.BigInteger, db.ForeignKey("permissions.id"), nullable=False, index=True)
 
