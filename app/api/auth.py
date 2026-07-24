@@ -3,19 +3,28 @@ from datetime import datetime
 
 from flask import current_app, jsonify
 from flask_jwt_extended import (
-    create_access_token,
-    create_refresh_token,
     current_user,
+    get_jwt,
     get_jwt_identity,
     jwt_required,
     set_refresh_cookies,
     unset_jwt_cookies,
+    verify_jwt_in_request,
 )
 from flask_restx import Resource
 
 from app.api.nsmodels import auth_ns, auth_parser, registration_parser
 from app.models import User
 from app.utils import normalize_email, validate_password
+from app.utils.refresh_tokens import (
+    RefreshTokenError,
+    find_by_jti,
+    get_raw_refresh_token_from_request,
+    issue_token_pair,
+    revoke_all_user_tokens,
+    revoke_token,
+    rotate_refresh_token,
+)
 
 logger = logging.getLogger("app.auth")
 
@@ -27,10 +36,7 @@ def _access_token_expires_in():
     return int(expires.total_seconds())
 
 
-def _build_login_response(user):
-    access_token = create_access_token(identity=user.uuid)
-    refresh_token = create_refresh_token(identity=user.uuid)
-
+def _auth_response(access_token, refresh_token):
     response = jsonify(
         {
             "access_token": access_token,
@@ -133,7 +139,8 @@ class AuthorizationApi(Resource):
             user.last_login_at = datetime.now()
             user.save()
 
-            return _build_login_response(user)
+            access_token, refresh_token, _ = issue_token_pair(user)
+            return _auth_response(access_token, refresh_token)
         except Exception:
             logger.exception("Login failed with unexpected error")
             return {"error": "internal_error", "message": "Internal error occurred during authorization."}, 500
@@ -150,15 +157,60 @@ class AccessTokenRefreshApi(Resource):
         if not user.is_active:
             return {"error": "forbidden", "message": "User account is inactive."}, 403
 
-        # Cookie rotation: issue a new refresh cookie alongside the new access token.
-        # Full DB-backed revoke/replay protection lands with the refresh_tokens model.
-        response = _build_login_response(user)
-        return response
+        claims = get_jwt()
+        jti = claims.get("jti")
+        raw_refresh = get_raw_refresh_token_from_request()
+        if not jti or not raw_refresh:
+            return {"error": "token_revoked", "message": "Refresh token is missing."}, 401
+
+        try:
+            access_token, refresh_token, _ = rotate_refresh_token(
+                user,
+                jti=jti,
+                raw_refresh_token=raw_refresh,
+            )
+        except RefreshTokenError as err:
+            response = jsonify({"error": err.code, "message": err.message})
+            unset_jwt_cookies(response)
+            return response, err.status_code
+
+        return _auth_response(access_token, refresh_token)
 
 
 @auth_ns.route("/logout")
 class LogoutApi(Resource):
     def post(self):
+        """Revoke the current refresh session (docs/05) and clear cookies."""
+        try:
+            verify_jwt_in_request(refresh=True)
+            jti = get_jwt().get("jti")
+            record = find_by_jti(jti) if jti else None
+            if record and record.revoked_at is None:
+                revoke_token(record)
+                logger.info("Logout revoked refresh token: jti=%s user_id=%s", record.jti, record.user_id)
+        except Exception:
+            # Idempotent logout: missing/invalid refresh cookie still clears cookies.
+            logger.info("Logout without valid refresh cookie")
+
         response = jsonify({"message": "logout success"})
+        unset_jwt_cookies(response)
+        return response
+
+
+@auth_ns.route("/logout_all")
+class LogoutAllApi(Resource):
+    @jwt_required()
+    @auth_ns.doc(security="JsonWebToken")
+    def post(self):
+        """Revoke every active refresh session for the current user."""
+        count = revoke_all_user_tokens(current_user.id)
+        logger.info("Logout-all revoked %s refresh tokens for user_uuid=%s", count, current_user.uuid)
+
+        response = jsonify(
+            {
+                "message": "logout_all success",
+                "revoked_sessions": count,
+            }
+        )
         unset_jwt_cookies(response)
         return response

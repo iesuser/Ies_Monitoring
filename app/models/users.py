@@ -38,6 +38,12 @@ class User(db.Model, BaseModel):
         back_populates="user",
         lazy="select",
     )
+    refresh_tokens = db.relationship(
+        "RefreshToken",
+        foreign_keys="RefreshToken.user_id",
+        back_populates="user",
+        lazy="select",
+    )
 
     @property
     def password(self):
