@@ -4,30 +4,6 @@ document.addEventListener("DOMContentLoaded", function() {
     const offcanvasElement = document.getElementById('offcanvasNavbar');
     const i18n = window.I18n;
 
-    function isTokenExpired(token) {
-        try {
-            const payloadBase64 = token.split('.')[1];
-            if (!payloadBase64) return true;
-            const payload = JSON.parse(atob(payloadBase64));
-            if (!payload.exp) return true;
-            const nowInSeconds = Math.floor(Date.now() / 1000);
-            return payload.exp <= nowInSeconds;
-        } catch (error) {
-            return true;
-        }
-    }
-
-    function clearLocalSession() {
-        if (typeof clearSessionData === 'function') {
-            clearSessionData();
-            return;
-        }
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        const loginPath = i18n ? i18n.localizePath("/login") : "/login";
-        window.location.href = loginPath;
-    }
-    
     // Define static navigation items
     const navItems = [
         { endpoint: i18n ? i18n.localizePath('/') : '/', text: i18n ? i18n.t('nav.home', 'Home') : 'Home' }
@@ -60,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Check for access_token in localStorage and update the navigation
     const accessToken = localStorage.getItem('access_token');
-    const hasValidAccessToken = accessToken && !isTokenExpired(accessToken);
+    const hasValidAccessToken = accessToken && !window.isTokenExpired(accessToken);
     if (hasValidAccessToken) {
         // User is logged in, show Logout button
         const logoutItem = document.createElement('li');
@@ -121,7 +97,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     );
                 }
             } finally {
-                clearLocalSession();
+                window.clearSessionData();
             }
         };
 
@@ -129,8 +105,8 @@ document.addEventListener("DOMContentLoaded", function() {
         navLinksEnd.appendChild(logoutItem);
 
     } else {
-        if (accessToken && isTokenExpired(accessToken)) {
-            clearLocalSession();
+        if (accessToken && window.isTokenExpired(accessToken)) {
+            window.clearSessionData();
             return;
         }
         // User is not logged in, show Login and Registration buttons
@@ -154,10 +130,10 @@ document.addEventListener("DOMContentLoaded", function() {
     langItem.className = 'nav-item mt-2 mt-lg-0';
     langItem.innerHTML = `
         <div class="btn-group btn-group-sm language-switcher" role="group" aria-label="Language switcher">
-            <button type="button" class="btn btn-outline-secondary language-btn" id="langEn" aria-label="Switch language to English" title="${i18n ? i18n.t('nav.lang.en', 'EN') : 'EN'}">
+            <button type="button" class="btn btn-sm btn-outline-secondary language-btn" id="langEn" aria-label="Switch language to English" title="${i18n ? i18n.t('nav.lang.en', 'EN') : 'EN'}">
                 <img src="/static/images/flag_en.svg" alt="${i18n ? i18n.t('nav.lang.en', 'EN') : 'EN'} flag" class="language-flag">
             </button>
-            <button type="button" class="btn btn-outline-secondary language-btn" id="langKa" aria-label="Switch language to Georgian" title="${i18n ? i18n.t('nav.lang.ka', 'KA') : 'KA'}">
+            <button type="button" class="btn btn-sm btn-outline-secondary language-btn" id="langKa" aria-label="Switch language to Georgian" title="${i18n ? i18n.t('nav.lang.ka', 'KA') : 'KA'}">
                 <img src="/static/images/flag_ka.svg" alt="${i18n ? i18n.t('nav.lang.ka', 'KA') : 'KA'} flag" class="language-flag">
             </button>
         </div>

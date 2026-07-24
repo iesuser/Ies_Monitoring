@@ -77,4 +77,4 @@ def change_password(lang=None):
         return redirect(url_for("auth.change_password", lang=_preferred_lang()))
     if raw_lang is not None and lang is None:
         return redirect(url_for("auth.change_password", lang="en"))
-    return render_template("changePass.html")
+    return render_template("changePassword.html")

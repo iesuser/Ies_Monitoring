@@ -20,6 +20,11 @@ class Config:
     LOG_MAX_BYTES = int(os.getenv("LOG_MAX_BYTES", 5 * 1024 * 1024))
     LOG_BACKUP_COUNT = int(os.getenv("LOG_BACKUP_COUNT", 5))
 
+    MAIL_SERVER = os.getenv("MAIL_SERVER")
+    MAIL_PORT = os.getenv("MAIL_PORT")
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+
     JWT_TOKEN_LOCATION = ["headers", "cookies"]
     JWT_HEADER_NAME = "Authorization"
     JWT_HEADER_TYPE = "Bearer"
