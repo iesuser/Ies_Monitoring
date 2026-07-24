@@ -52,8 +52,8 @@ const togglePassword = document.getElementById('togglePassword');
 const password = document.getElementById('password');
 const togglePasswordImg = document.getElementById('togglePasswordImg');
 
-const eyeViewPath = "static/images/eye-view.svg";
-const eyehidePath = "static/images/eye-hide.svg";
+const eyeViewPath = "/static/images/eye-view.svg";
+const eyehidePath = "/static/images/eye-hide.svg";
 
 togglePassword.addEventListener('click', (e) => {
     const type = password.getAttribute('type') === 'password' ? 'text' : 'password';

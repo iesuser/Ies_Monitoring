@@ -1,0 +1,1 @@
+from app.logger.logging_conf import configure_logging
