@@ -15,6 +15,35 @@ def test_list_seismic_events_requires_permission(client, user_auth_headers):
     assert response.status_code == 403
 
 
+def test_view_permission_can_list_but_not_create(client, permissions, app):
+    from tests.helpers import VALID_PASSWORD, auth_headers, create_user, login
+
+    create_user(
+        email="events.viewer@example.com",
+        first_name="Events",
+        last_name="Viewer",
+        password=VALID_PASSWORD,
+        permission_codes=["can_event_view"],
+    )
+    login_response = login(client, "events.viewer@example.com", VALID_PASSWORD)
+    assert login_response.status_code == 200
+    headers = auth_headers(login_response.get_json()["access_token"])
+
+    listed = client.get("/api/seismic_events/", headers=headers)
+    assert listed.status_code == 200
+
+    created = client.post(
+        "/api/seismic_events/",
+        headers=headers,
+        json={
+            "origin_time": "2026-08-05T12:30:00",
+            "latitude": 41.7151,
+            "longitude": 44.8271,
+        },
+    )
+    assert created.status_code == 403
+
+
 def test_create_list_update_delete_seismic_event(client, admin_auth_headers, app):
     create_response = client.post(
         "/api/seismic_events/",
@@ -34,6 +63,7 @@ def test_create_list_update_delete_seismic_event(client, admin_auth_headers, app
     assert event["latitude"] == 41.7151
     assert event["magnitudes"] == []
     assert event["beachball"] is None
+    assert event["is_automatic"] is False
 
     list_response = client.get("/api/seismic_events/", headers=admin_auth_headers)
     assert list_response.status_code == 200
@@ -42,12 +72,13 @@ def test_create_list_update_delete_seismic_event(client, admin_auth_headers, app
     update_response = client.put(
         f"/api/seismic_events/{event_id}",
         headers=admin_auth_headers,
-        json={"location_en": "Tbilisi region", "depth": 12.0},
+        json={"location_en": "Tbilisi region", "depth": 12.0, "is_automatic": True},
     )
     assert update_response.status_code == 200
     updated = update_response.get_json()["event"]
     assert updated["location_en"] == "Tbilisi region"
     assert updated["depth"] == 12.0
+    assert updated["is_automatic"] is True
 
     delete_response = client.delete(
         f"/api/seismic_events/{event_id}",

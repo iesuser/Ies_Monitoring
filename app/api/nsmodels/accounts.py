@@ -39,7 +39,11 @@ current_user_model = accounts_ns.inherit(
             required=False,
             example=True,
         ),
-        "can_events": fields.Boolean(
+        "can_event_view": fields.Boolean(
+            required=False,
+            example=True,
+        ),
+        "can_event_edit": fields.Boolean(
             required=False,
             example=True,
         ),

@@ -9,7 +9,8 @@ def test_get_current_user(client, admin_auth_headers, admin_user):
     assert data["can_users"] is True
     assert data["can_permissions"] is True
     assert data["can_recips"] is True
-    assert data["can_events"] is True
+    assert data["can_event_view"] is True
+    assert data["can_event_edit"] is True
 
 
 def test_update_current_user(client, admin_auth_headers):
