@@ -243,83 +243,71 @@ seismic_event_filter_parser.add_argument(
     "event_id",
     type=int,
     required=False,
-    location="args",
     help="Exact seismic event id",
 )
 seismic_event_filter_parser.add_argument(
     "iesdata_id",
     type=str,
     required=False,
-    location="args",
     help="Substring match against IES data id",
 )
 seismic_event_filter_parser.add_argument(
     "seiscomp_oid",
     type=str,
     required=False,
-    location="args",
     help="Substring match against SeisComP object id",
 )
 seismic_event_filter_parser.add_argument(
     "location",
     type=str,
     required=False,
-    location="args",
     help="Substring match against location_en or location_ge",
 )
 seismic_event_filter_parser.add_argument(
     "area",
     type=str,
     required=False,
-    location="args",
     help="Substring match against area",
 )
 seismic_event_filter_parser.add_argument(
     "magnitude",
     type=str,
     required=False,
-    location="args",
     help="Magnitude catalog code, e.g. MW / ML (filters by that type)",
 )
 seismic_event_filter_parser.add_argument(
     "magnitude_min",
     type=float,
     required=False,
-    location="args",
     help="Minimum magnitude value (inclusive)",
 )
 seismic_event_filter_parser.add_argument(
     "magnitude_max",
     type=float,
     required=False,
-    location="args",
     help="Maximum magnitude value (inclusive)",
 )
 seismic_event_filter_parser.add_argument(
     "depth_min",
     type=float,
     required=False,
-    location="args",
     help="Minimum depth in km (inclusive)",
 )
 seismic_event_filter_parser.add_argument(
     "depth_max",
     type=float,
     required=False,
-    location="args",
     help="Maximum depth in km (inclusive)",
 )
 seismic_event_filter_parser.add_argument(
     "date_from",
     type=parse_datetime,
     required=False,
-    location="args",
     help="Origin time from (ISO 8601, inclusive)",
 )
 seismic_event_filter_parser.add_argument(
     "date_to",
     type=parse_datetime,
     required=False,
-    location="args",
     help="Origin time to (ISO 8601, inclusive)",
 )
