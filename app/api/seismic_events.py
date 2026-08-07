@@ -224,8 +224,8 @@ class SeismicEventsFilterApi(Resource):
     @seismic_events_ns.response(401, "Unauthorized", error_model)
     @seismic_events_ns.response(403, "Forbidden", error_model)
     @seismic_events_ns.response(404, "Not Found", error_model)
-    def get(self):
-        """Filter seismic events (requires can_events). All query params are optional."""
+    def post(self):
+        """Filter seismic events (requires can_events). All body fields are optional."""
         denied = _require_can_events()
         if denied:
             return denied
