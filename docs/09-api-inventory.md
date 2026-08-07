@@ -58,7 +58,7 @@ Password policy: min 12 chars, upper + lower + digit + special. Hashing: Werkzeu
 
 | Method | Path | Auth | Notes |
 |--------|------|------|--------|
-| GET | `/api/accounts/ourself` | JWT | Profile + flags `can_users`, `can_permissions`, `can_recips`, `can_events` |
+| GET | `/api/accounts/ourself` | JWT | Profile + flags `can_users`, `can_permissions`, `can_recips`, `can_event_view`, `can_event_edit` |
 | PUT | `/api/accounts/ourself` | JWT | Own `first_name`, `last_name` |
 | GET | `/api/accounts/` | JWT/API key + `can_users` | `{ items, total }` |
 | GET | `/api/accounts/<uuid>` | JWT/API key + `can_users` | Single user |
@@ -126,24 +126,24 @@ Raw API key is shown only once at registration (`api_key_hash` is stored).
 
 ## Seismic Events — `/api/seismic_events`
 
-Requires JWT or API key with **`can_events`**.
+Requires JWT or API key with **`can_event_view`** (read) and/or **`can_event_edit`** (write). Editors can also read.
 
 | Method | Path | Auth | Notes |
 |--------|------|------|--------|
-| GET | `/api/seismic_events/` | `can_events` | List events with nested magnitudes + beachball |
-| POST | `/api/seismic_events/filter` | `can_events` | Filter by body fields: `event_id` (exact), `iesdata_id`, `seiscomp_oid`, `location`, `area`, `magnitude` (code), `magnitude_min`, `magnitude_max`, `depth_min`, `depth_max`, `date_from`, `date_to`. All optional; AND combined. `iesdata_id`, `seiscomp_oid`, `location`, `area` are substring matches |
-| POST | `/api/seismic_events/` | `can_events` | Create. Required: `origin_time`, `latitude`, `longitude`. Optional: `depth`, `iesdata_id`, `seiscomp_oid`, `location_ge`, `location_en`, `area` |
-| GET | `/api/seismic_events/<id>` | `can_events` | Detail |
-| PUT | `/api/seismic_events/<id>` | `can_events` | Update fields |
-| DELETE | `/api/seismic_events/<id>` | `can_events` | Delete event + cascade magnitudes/beachball |
-| GET | `/api/seismic_events/magnitude_types` | `can_events` | Magnitude catalog (ML, MW, …) |
-| POST | `/api/seismic_events/<id>/magnitudes` | `can_events` | Add magnitude. Required: `value` + (`magnitude_id` or `magnitude_code`) |
-| PUT | `/api/seismic_events/magnitudes/<em_id>` | `can_events` | Update value and/or magnitude type |
-| DELETE | `/api/seismic_events/magnitudes/<em_id>` | `can_events` | Remove magnitude from event |
-| GET | `/api/seismic_events/<id>/beachball` | `can_events` | Get beachball (404 if none) |
-| POST | `/api/seismic_events/<id>/beachball` | `can_events` | Create beachball (one per event; 409 if exists) |
-| PUT | `/api/seismic_events/<id>/beachball` | `can_events` | Update `rake` / `dip` / `strike` / `beachball_path` |
-| DELETE | `/api/seismic_events/<id>/beachball` | `can_events` | Remove beachball |
+| GET | `/api/seismic_events/` | `can_event_view` or `can_event_edit` | List events with nested magnitudes + beachball |
+| POST | `/api/seismic_events/filter` | `can_event_view` or `can_event_edit` | Filter by body fields: `event_id` (exact), `iesdata_id`, `seiscomp_oid`, `location`, `area`, `magnitude` (code), `magnitude_min`, `magnitude_max`, `depth_min`, `depth_max`, `date_from`, `date_to`. All optional; AND combined. `iesdata_id`, `seiscomp_oid`, `location`, `area` are substring matches |
+| POST | `/api/seismic_events/` | `can_event_edit` | Create. Required: `origin_time`, `latitude`, `longitude`. Optional: `depth`, `iesdata_id`, `seiscomp_oid`, `location_ge`, `location_en`, `area`, `is_automatic` (default false) |
+| GET | `/api/seismic_events/<id>` | `can_event_view` or `can_event_edit` | Detail |
+| PUT | `/api/seismic_events/<id>` | `can_event_edit` | Update fields |
+| DELETE | `/api/seismic_events/<id>` | `can_event_edit` | Delete event + cascade magnitudes/beachball |
+| GET | `/api/seismic_events/magnitude_types` | `can_event_view` or `can_event_edit` | Magnitude catalog (ML, MW, …) |
+| POST | `/api/seismic_events/<id>/magnitudes` | `can_event_edit` | Add magnitude. Required: `value` + (`magnitude_id` or `magnitude_code`) |
+| PUT | `/api/seismic_events/magnitudes/<em_id>` | `can_event_edit` | Update value and/or magnitude type |
+| DELETE | `/api/seismic_events/magnitudes/<em_id>` | `can_event_edit` | Remove magnitude from event |
+| GET | `/api/seismic_events/<id>/beachball` | `can_event_view` or `can_event_edit` | Get beachball (404 if none) |
+| POST | `/api/seismic_events/<id>/beachball` | `can_event_edit` | Create beachball (one per event; 409 if exists) |
+| PUT | `/api/seismic_events/<id>/beachball` | `can_event_edit` | Update `rake` / `dip` / `strike` / `beachball_path` |
+| DELETE | `/api/seismic_events/<id>/beachball` | `can_event_edit` | Remove beachball |
 
 ---
 
@@ -155,13 +155,14 @@ Requires JWT or API key with **`can_events`**.
 | `can_permissions` | Permissions page, catalog create/delete, grant/revoke on users (and on register) |
 | `can_recips` | Full recipients write + Notify UI |
 | `can_recips_read` | Read-only recipients (typical for service API keys) |
-| `can_events` | Seismic events, event magnitudes, beachballs |
+| `can_event_view` | View seismic events, magnitudes, beachballs |
+| `can_event_edit` | Create/update/delete seismic events, magnitudes, beachballs |
 
 Admin seed (`flask populate_db`):
 
 - email: `roma.grigalashvili@iliauni.edu.ge`
 - password: `PASSWORD` (change before production)
-- all seeded permissions assigned (including `can_events`)
+- all seeded permissions assigned (including `can_event_view` and `can_event_edit`)
 - magnitude catalog: ML, MB, MS, MD, MW, K, MPV, MLH, MC, MLV, M
 
 ---
@@ -195,7 +196,7 @@ Admin seed (`flask populate_db`):
 | `/<lang>/registration` | Register new user (full page) | `can_users` (client-checked; API enforces) |
 | `/<lang>/services` | Service registration / delete (from Accounts) | `can_users` |
 | `/<lang>/permissions` | Permission catalog list/create/delete (from Accounts) | `can_permissions` only |
-| `/<lang>/seismic_events` | Seismic events list + edit/delete detail | `can_events` |
+| `/<lang>/seismic_events` | Seismic events list + edit/delete detail | `can_event_view` / `can_event_edit` |
 | `/<lang>/notify` | Recipients admin | `can_recips` |
 | `/<lang>/change_password` | Change password page | Logged-in (API pending) |
 | `/<lang>/reset_password/<token>` | Reset password | Public |

@@ -36,7 +36,7 @@ permission_create_parser.add_argument(
     "code",
     type=str,
     required=True,
-    help="Unique permission code, e.g. can_events",
+    help="Unique permission code, e.g. can_event_view",
 )
 permission_create_parser.add_argument(
     "name",

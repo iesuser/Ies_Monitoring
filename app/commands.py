@@ -98,8 +98,13 @@ def populate_db_core():
             "Read recipients list and details (for service API keys).",
         ),
         (
-            "can_events",
-            "Seismic Events Management",
+            "can_event_view",
+            "Seismic Events View",
+            "View seismic events, magnitudes, and beachballs.",
+        ),
+        (
+            "can_event_edit",
+            "Seismic Events Edit",
             "Create, update, and delete seismic events, magnitudes, and beachballs.",
         ),
     ]
@@ -207,6 +212,7 @@ def populate_db_core():
             location_ge="თბილისის მახლობლად",
             location_en="Near Tbilisi",
             area="Georgia",
+            is_automatic=False,
         )
         sample_event.create()
         click.echo(f"Created sample seismic event: {sample_oid}")

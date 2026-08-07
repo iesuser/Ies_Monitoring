@@ -31,8 +31,12 @@ from app.utils.auth_utils import require_permissions
 logger = logging.getLogger("app.seismic_events")
 
 
-def _require_can_events():
-    return require_permissions("can_events")
+def _require_can_event_view():
+    return require_permissions("can_event_edit", "can_event_view")
+
+
+def _require_can_event_edit():
+    return require_permissions("can_event_edit")
 
 
 def _get_event_or_404(event_id):
@@ -110,6 +114,11 @@ def _apply_event_fields(event, payload, *, creating=False):
                 event.__setattr__(field, _optional_str(payload.get(field)))
             elif creating:
                 event.__setattr__(field, None)
+
+    if creating:
+        event.is_automatic = bool(payload.get("is_automatic", False))
+    elif "is_automatic" in payload and payload.get("is_automatic") is not None:
+        event.is_automatic = bool(payload.get("is_automatic"))
 
     return None
 
@@ -225,8 +234,8 @@ class SeismicEventsFilterApi(Resource):
     @seismic_events_ns.response(403, "Forbidden", error_model)
     @seismic_events_ns.response(404, "Not Found", error_model)
     def post(self):
-        """Filter seismic events (requires can_events). All body fields are optional."""
-        denied = _require_can_events()
+        """Filter seismic events (requires can_event_view or can_event_edit). All body fields are optional."""
+        denied = _require_can_event_view()
         if denied:
             return denied
 
@@ -247,8 +256,8 @@ class MagnitudeCatalogApi(Resource):
     @seismic_events_ns.response(401, "Unauthorized", error_model)
     @seismic_events_ns.response(403, "Forbidden", error_model)
     def get(self):
-        """List magnitude catalog types (requires can_events)."""
-        denied = _require_can_events()
+        """List magnitude catalog types (requires can_event_view or can_event_edit)."""
+        denied = _require_can_event_view()
         if denied:
             return denied
 
@@ -264,8 +273,8 @@ class SeismicEventsApi(Resource):
     @seismic_events_ns.response(401, "Unauthorized", error_model)
     @seismic_events_ns.response(403, "Forbidden", error_model)
     def get(self):
-        """List seismic events (requires can_events)."""
-        denied = _require_can_events()
+        """List seismic events (requires can_event_view or can_event_edit)."""
+        denied = _require_can_event_view()
         if denied:
             return denied
 
@@ -281,8 +290,8 @@ class SeismicEventsApi(Resource):
     @seismic_events_ns.response(403, "Forbidden", error_model)
     @seismic_events_ns.response(409, "Conflict", error_model)
     def post(self):
-        """Create a seismic event (requires can_events)."""
-        denied = _require_can_events()
+        """Create a seismic event (requires can_event_edit)."""
+        denied = _require_can_event_edit()
         if denied:
             return denied
 
@@ -319,8 +328,8 @@ class SeismicEventDetailApi(Resource):
     @seismic_events_ns.response(403, "Forbidden", error_model)
     @seismic_events_ns.response(404, "Not Found", error_model)
     def get(self, event_id):
-        """Get a seismic event by id (requires can_events)."""
-        denied = _require_can_events()
+        """Get a seismic event by id (requires can_event_view or can_event_edit)."""
+        denied = _require_can_event_view()
         if denied:
             return denied
 
@@ -338,8 +347,8 @@ class SeismicEventDetailApi(Resource):
     @seismic_events_ns.response(404, "Not Found", error_model)
     @seismic_events_ns.response(409, "Conflict", error_model)
     def put(self, event_id):
-        """Update a seismic event (requires can_events)."""
-        denied = _require_can_events()
+        """Update a seismic event (requires can_event_edit)."""
+        denied = _require_can_event_edit()
         if denied:
             return denied
 
@@ -383,8 +392,8 @@ class SeismicEventDetailApi(Resource):
     @seismic_events_ns.response(403, "Forbidden", error_model)
     @seismic_events_ns.response(404, "Not Found", error_model)
     def delete(self, event_id):
-        """Delete a seismic event and related magnitudes/beachball (requires can_events)."""
-        denied = _require_can_events()
+        """Delete a seismic event and related magnitudes/beachball (requires can_event_edit)."""
+        denied = _require_can_event_edit()
         if denied:
             return denied
 
@@ -409,8 +418,8 @@ class EventMagnitudesApi(Resource):
     @seismic_events_ns.response(404, "Not Found", error_model)
     @seismic_events_ns.response(409, "Conflict", error_model)
     def post(self, event_id):
-        """Add a magnitude to a seismic event (requires can_events)."""
-        denied = _require_can_events()
+        """Add a magnitude to a seismic event (requires can_event_edit)."""
+        denied = _require_can_event_edit()
         if denied:
             return denied
 
@@ -469,8 +478,8 @@ class EventMagnitudeDetailApi(Resource):
     @seismic_events_ns.response(404, "Not Found", error_model)
     @seismic_events_ns.response(409, "Conflict", error_model)
     def put(self, event_magnitude_id):
-        """Update an event magnitude (requires can_events)."""
-        denied = _require_can_events()
+        """Update an event magnitude (requires can_event_edit)."""
+        denied = _require_can_event_edit()
         if denied:
             return denied
 
@@ -515,8 +524,8 @@ class EventMagnitudeDetailApi(Resource):
     @seismic_events_ns.response(403, "Forbidden", error_model)
     @seismic_events_ns.response(404, "Not Found", error_model)
     def delete(self, event_magnitude_id):
-        """Delete an event magnitude (requires can_events)."""
-        denied = _require_can_events()
+        """Delete an event magnitude (requires can_event_edit)."""
+        denied = _require_can_event_edit()
         if denied:
             return denied
 
@@ -541,8 +550,8 @@ class EventBeachballApi(Resource):
     @seismic_events_ns.response(403, "Forbidden", error_model)
     @seismic_events_ns.response(404, "Not Found", error_model)
     def get(self, event_id):
-        """Get beachball for a seismic event (requires can_events)."""
-        denied = _require_can_events()
+        """Get beachball for a seismic event (requires can_event_view or can_event_edit)."""
+        denied = _require_can_event_view()
         if denied:
             return denied
 
@@ -562,8 +571,8 @@ class EventBeachballApi(Resource):
     @seismic_events_ns.response(404, "Not Found", error_model)
     @seismic_events_ns.response(409, "Conflict", error_model)
     def post(self, event_id):
-        """Create beachball for a seismic event (requires can_events)."""
-        denied = _require_can_events()
+        """Create beachball for a seismic event (requires can_event_edit)."""
+        denied = _require_can_event_edit()
         if denied:
             return denied
 
@@ -606,8 +615,8 @@ class EventBeachballApi(Resource):
     @seismic_events_ns.response(403, "Forbidden", error_model)
     @seismic_events_ns.response(404, "Not Found", error_model)
     def put(self, event_id):
-        """Update beachball for a seismic event (requires can_events)."""
-        denied = _require_can_events()
+        """Update beachball for a seismic event (requires can_event_edit)."""
+        denied = _require_can_event_edit()
         if denied:
             return denied
 
@@ -641,8 +650,8 @@ class EventBeachballApi(Resource):
     @seismic_events_ns.response(403, "Forbidden", error_model)
     @seismic_events_ns.response(404, "Not Found", error_model)
     def delete(self, event_id):
-        """Delete beachball for a seismic event (requires can_events)."""
-        denied = _require_can_events()
+        """Delete beachball for a seismic event (requires can_event_edit)."""
+        denied = _require_can_event_edit()
         if denied:
             return denied
 
