@@ -13,6 +13,7 @@
 | Permission `can_recips` (write) | Implemented |
 | Permission `can_recips_read` (list/detail) | Implemented |
 | Service API keys for read-only access | Implemented (see Services API) |
+| Alert zones (`/api/alert_zones`) | Implemented (API), see [`11-alert-zones.md`](11-alert-zones.md) |
 | Push / Devices / Queue / History / Templates | Planned |
 
 ---

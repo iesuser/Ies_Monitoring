@@ -85,3 +85,14 @@ from app.api.nsmodels.publish_events import (
     error_model as publish_events_error_model,
     JWT_OR_API_KEY as PUBLISH_EVENTS_JWT_OR_API_KEY,
 )
+from app.api.nsmodels.alert_zones import (
+    alert_zones_ns,
+    alert_zone_model,
+    alert_zone_create_model,
+    alert_zone_update_model,
+    alert_zone_response_model,
+    alert_zone_list_response_model,
+    message_response_model as alert_zone_message_response_model,
+    error_model as alert_zone_error_model,
+    JWT_OR_API_KEY as ALERT_ZONES_JWT_OR_API_KEY,
+)

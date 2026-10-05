@@ -19,6 +19,7 @@ Flask-RESTX mounting: `Api` has no URL `prefix`; each namespace uses `path="/api
 | Recipients (`/api/recips`) | Implemented |
 | Seismic Events (`/api/seismic_events`) | Implemented |
 | Publish Events (`/api/publish_events`) | Implemented |
+| Alert Zones (`/api/alert_zones`) | Implemented |
 | Permissions models + seed + runtime checks | Implemented |
 | Permissions REST catalog (list/create/delete) | Implemented |
 | User permission grant/revoke on accounts | Implemented |
@@ -127,6 +128,20 @@ Raw API key is shown only once at registration (`api_key_hash` is stored).
 | POST | `/api/recips/<id>/numbers` | `can_recips` | Add phone (`+9955XXXXXXXX`) |
 | PUT | `/api/recips/numbers/<number_id>` | `can_recips` | Update phone |
 | DELETE | `/api/recips/numbers/<number_id>` | `can_recips` | Remove phone |
+
+---
+
+## Alert Zones — `/api/alert_zones`
+
+დეტალური აღწერა: [`11-alert-zones.md`](11-alert-zones.md).
+
+| Method | Path | Auth | Notes |
+|--------|------|------|--------|
+| GET | `/api/alert_zones` | JWT/API key + `can_recips` **or** `can_recips_read` | List zones |
+| GET | `/api/alert_zones/<id>` | same | Detail |
+| POST | `/api/alert_zones` | JWT/API key + `can_recips` | Create. Required: `name`, `geometry` (GeoJSON Polygon, `[lon, lat]`), `min_magnitude` (ML, 0–10), `notif_channels` (non-empty subset of `mail`, `number`, `push_notif`). Optional: `max_magnitude` (0–10, ≥ `min_magnitude`; null = no upper limit), `enabled` (default true), `notif_is_staff` (default false). Unclosed rings are closed automatically |
+| PUT | `/api/alert_zones/<id>` | `can_recips` | Partial update: only provided fields change |
+| DELETE | `/api/alert_zones/<id>` | `can_recips` | Delete |
 
 ---
 

@@ -27,16 +27,21 @@ Real-time earthquake notification platform for Android and iOS devices.
 
 ## Documentation
 
-- [Project Overview](docs/01-project-overview.md)
-- [System Architecture](docs/02-system-architecture.md)
-- [Software Requirements](docs/03-software-requirements.md)
-- [System Design](docs/04-system-design.md)
-- [Authentication Design](docs/05-authentication-design.md)
-- [Accounts and Permissions Design](docs/06-accounts-and-permissions-design.md)
-- [Notification Design](docs/07-notification-design.md)
-- [Backend Setup](docs/08-backend-setup.md)
-- [API Inventory (Implemented)](docs/09-api-inventory.md)
-- [Seismic Events (UI + API)](docs/10-seismic-events.md)
+Documentation is available in English (`docs/en/`) and Georgian (`docs/ka/`). Both folders contain the same set of documents.
+
+| Document | English | ქართული |
+|----------|---------|---------|
+| Project Overview | [en](docs/en/01-project-overview.md) | [ka](docs/ka/01-project-overview.md) |
+| System Architecture | [en](docs/en/02-system-architecture.md) | [ka](docs/ka/02-system-architecture.md) |
+| Software Requirements | [en](docs/en/03-software-requirements.md) | [ka](docs/ka/03-software-requirements.md) |
+| System Design | [en](docs/en/04-system-design.md) | [ka](docs/ka/04-system-design.md) |
+| Authentication Design | [en](docs/en/05-authentication-design.md) | [ka](docs/ka/05-authentication-design.md) |
+| Accounts and Permissions Design | [en](docs/en/06-accounts-and-permissions-design.md) | [ka](docs/ka/06-accounts-and-permissions-design.md) |
+| Notification Design | [en](docs/en/07-notification-design.md) | [ka](docs/ka/07-notification-design.md) |
+| Backend Setup | [en](docs/en/08-backend-setup.md) | [ka](docs/ka/08-backend-setup.md) |
+| API Inventory (Implemented) | [en](docs/en/09-api-inventory.md) | [ka](docs/ka/09-api-inventory.md) |
+| Seismic Events (UI + API) | [en](docs/en/10-seismic-events.md) | [ka](docs/ka/10-seismic-events.md) |
+| Alert Zones (API) | [en](docs/en/11-alert-zones.md) | [ka](docs/ka/11-alert-zones.md) |
 
 ## Current Backend Status
 
@@ -46,6 +51,7 @@ Real-time earthquake notification platform for Android and iOS devices.
 - Accounts admin UI/API (`/api/accounts/...`)
 - Service accounts + API keys UI/API (`/api/services`, `/services`)
 - Recipients UI/API (`/api/recips`, `/notify`)
+- Alert zones API (`/api/alert_zones`): map polygons with ML magnitude range and notification target
 - Permissions catalog REST (`/api/permissions`) + user grant/revoke on accounts
 - Permissions seed + runtime checks (`can_users`, `can_permissions`, `can_recips`, `can_recips_read`, `can_event_view`, `can_event_edit`, `can_event_publish`)
 - JWT + service `X-API-Key` auth
@@ -58,8 +64,8 @@ Real-time earthquake notification platform for Android and iOS devices.
 - Redis/Celery workers
 - Health endpoint
 
-Source of truth for endpoints: [docs/09-api-inventory.md](docs/09-api-inventory.md).  
-Seismic Events details: [docs/10-seismic-events.md](docs/10-seismic-events.md).
+Source of truth for endpoints: [docs/en/09-api-inventory.md](docs/en/09-api-inventory.md).  
+Seismic Events details: [docs/en/10-seismic-events.md](docs/en/10-seismic-events.md).
 
 ## Testing
 

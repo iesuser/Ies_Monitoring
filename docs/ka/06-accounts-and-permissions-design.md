@@ -544,4 +544,3 @@ Permissions არ ინახება JWT Token-ში და ყოველ
 - `created_at`.
 
 ---
-

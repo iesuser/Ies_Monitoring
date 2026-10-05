@@ -128,3 +128,51 @@ def normalize_email(email: str) -> str:
         raise ValueError("ელ.ფოსტის ფორმატი არასწორია.")
 
     return normalized
+
+
+def _is_number(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def validate_polygon_geometry(geometry) -> dict:
+    """
+    Validate a GeoJSON Polygon and return a normalized copy.
+    - type must be "Polygon"
+    - each ring needs at least 3 distinct points; unclosed rings are closed automatically
+    - points are [lon, lat] within valid ranges (extra dimensions are dropped)
+    """
+    if not isinstance(geometry, dict):
+        raise ValueError("geometry სავალდებულოა და უნდა იყოს GeoJSON ობიექტი.")
+
+    if geometry.get("type") != "Polygon":
+        raise ValueError('geometry.type უნდა იყოს "Polygon".')
+
+    rings = geometry.get("coordinates")
+    if not isinstance(rings, list) or not rings:
+        raise ValueError("geometry.coordinates არ უნდა იყოს ცარიელი.")
+
+    normalized_rings = []
+    for ring in rings:
+        if not isinstance(ring, list):
+            raise ValueError("geometry.coordinates-ის ყოველი რგოლი უნდა იყოს წერტილების სია.")
+
+        points = []
+        for point in ring:
+            if not isinstance(point, list) or len(point) < 2:
+                raise ValueError("ყოველი წერტილი უნდა იყოს ფორმატში [lon, lat].")
+            lon, lat = point[0], point[1]
+            if not _is_number(lon) or not _is_number(lat):
+                raise ValueError("წერტილის კოორდინატები უნდა იყოს რიცხვები.")
+            if not (-180 <= lon <= 180 and -90 <= lat <= 90):
+                raise ValueError("კოორდინატები დიაპაზონს გარეთაა: lon [-180, 180], lat [-90, 90].")
+            points.append([float(lon), float(lat)])
+
+        if points and points[0] != points[-1]:
+            points.append(list(points[0]))
+
+        if len(points) < 4:
+            raise ValueError("polygon-ს უნდა ჰქონდეს მინიმუმ 3 განსხვავებული წერტილი.")
+
+        normalized_rings.append(points)
+
+    return {"type": "Polygon", "coordinates": normalized_rings}
