@@ -1,7 +1,12 @@
 const EVENT_DETAILS_ALERT_ID = "eventDetailsAlertPlaceholder";
 
+const DETAIL_MAP_ZOOM = 9;
+
 let detailMap = null;
 let detailMapMarker = null;
+let detailInfoWindow = null;
+let detailMapEvent = null;
+let detailMapAuthFailed = false;
 
 function t(key, fallback) {
     const i18n = window.I18n;
@@ -303,70 +308,100 @@ function renderBeachball(beachball) {
     `;
 }
 
-function renderDetailMap(event) {
-    if (typeof L === "undefined") {
-        return;
-    }
+function detailMapPosition(event) {
+    const lat = Number(event?.latitude);
+    const lng = Number(event?.longitude);
+    return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+}
 
+function showDetailMapMessage(key, fallback) {
     const mapElement = document.getElementById("eventDetailsMap");
     if (!mapElement) {
         return;
     }
+    detailMap = null;
+    detailMapMarker = null;
+    detailInfoWindow = null;
+    mapElement.innerHTML = `<p class="text-muted mb-0 p-3">${escapeHtml(t(key, fallback))}</p>`;
+}
 
-    const lat = Number(event.latitude);
-    const lon = Number(event.longitude);
-    if (Number.isNaN(lat) || Number.isNaN(lon)) {
-        mapElement.innerHTML = `<p class="text-muted mb-0 p-3">${escapeHtml(
-            t("events.details.map_unavailable", "Map coordinates are unavailable.")
-        )}</p>`;
+function openDetailMapPopup() {
+    detailInfoWindow.setContent(detailMapMarker.popupHtml);
+    detailInfoWindow.open({ map: detailMap, anchor: detailMapMarker });
+}
+
+function renderDetailMap(event) {
+    detailMapEvent = event;
+    const mapElement = document.getElementById("eventDetailsMap");
+    if (!mapElement || detailMapAuthFailed) {
         return;
     }
 
+    const position = detailMapPosition(event);
+    if (!position) {
+        showDetailMapMessage("events.details.map_unavailable", "Map coordinates are unavailable.");
+        return;
+    }
+    if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
+        showDetailMapMessage("events.map.unavailable", "Map is unavailable.");
+        return;
+    }
+    if (!window.google?.maps?.Map) {
+        // The API is still loading; initEventDetailMap renders detailMapEvent when it is ready.
+        return;
+    }
+
+    const style = window.EventMapStyle;
     if (!detailMap) {
-        detailMap = L.map(mapElement, {
-            zoomControl: true,
-            attributionControl: true,
-        }).setView([lat, lon], 9);
-
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 18,
-            attribution: "&copy; OpenStreetMap",
-        }).addTo(detailMap);
+        mapElement.innerHTML = "";
+        detailMap = new google.maps.Map(mapElement, {
+            center: position,
+            zoom: DETAIL_MAP_ZOOM,
+            mapTypeId: google.maps.MapTypeId.HYBRID,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            gestureHandling: "cooperative",
+        });
+        detailInfoWindow = new google.maps.InfoWindow();
     } else {
-        detailMap.setView([lat, lon], Math.max(detailMap.getZoom(), 9));
+        detailMap.setCenter(position);
     }
 
-    if (detailMapMarker) {
-        detailMap.removeLayer(detailMapMarker);
-    }
-
-    detailMapMarker = L.circleMarker([lat, lon], {
-        radius: 8,
-        color: "#0d6efd",
-        weight: 1,
-        fillColor: "#0d6efd",
-        fillOpacity: 0.8,
-    }).addTo(detailMap);
-
-    const magnitude = getPreferredMagnitude(event);
-    const magText = magnitude
-        ? `${magnitude.value.toFixed(1)}${magnitude.code ? ` ${magnitude.code}` : ""}`
-        : "—";
-    detailMapMarker.bindPopup(`
-        <div class="small">
-            <div><strong>#${escapeHtml(event.id)}</strong></div>
-            <div>${escapeHtml(formatOriginTime(event.origin_time))}</div>
-            <div>${escapeHtml(magText)}</div>
-            <div>${escapeHtml(preferredLocation(event))}</div>
-        </div>
-    `);
-
-    setTimeout(() => detailMap?.invalidateSize(), 120);
+    detailMapMarker?.setMap(null);
+    const kind = style.markerKind(style.originTimeMs(event.origin_time), false, Date.now());
+    detailMapMarker = new google.maps.Marker({
+        position,
+        map: detailMap,
+        title: `#${event.id ?? ""}`,
+        icon: style.markerIcon(kind),
+    });
+    detailMapMarker.popupHtml = style.formatPopup(event, getPreferredMagnitude(event));
+    detailMapMarker.addListener("click", openDetailMapPopup);
 }
 
+// The map is created inside a hidden tab; re-center once the tab has its real size.
 function invalidateDetailMap() {
-    setTimeout(() => detailMap?.invalidateSize(), 80);
+    const position = detailMapPosition(detailMapEvent);
+    if (detailMap && position) {
+        detailMap.setCenter(position);
+    }
 }
+
+// Called by the Google Maps script (callback=initEventDetailMap).
+window.initEventDetailMap = () => {
+    if (detailMapEvent) {
+        renderDetailMap(detailMapEvent);
+    }
+};
+
+const previousGmAuthFailure = window.gm_authFailure;
+// Google calls this when the API key is invalid or not allowed for this domain.
+window.gm_authFailure = () => {
+    previousGmAuthFailure?.();
+    detailMapAuthFailed = true;
+    showDetailMapMessage("events.map.unavailable", "Map is unavailable.");
+};
 
 function goToEventsList() {
     const path = window.I18n?.localizePath?.("/seismic_events") || "/seismic_events";

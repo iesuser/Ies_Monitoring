@@ -4,15 +4,6 @@
     IES Monitoring | Event {{ event_id }}
 {% endblock %}
 
-{% block head %}
-<link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-/>
-{% endblock %}
-
 {% block body %}
 <div
     class="container-fluid container-lg py-3 event-detail-page"
@@ -153,11 +144,14 @@
 {% endblock %}
 
 {% block scripts %}
-<script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-></script>
+<script src="{{ url_for('static', filename='js/seismic_events/map.js') }}"></script>
 <script src="{{ url_for('static', filename='js/seismic_events/editEvent.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/seismic_events/eventDetailsPage.js') }}" defer></script>
+{% if config.GOOGLE_MAPS_API_KEY %}
+{# defer only (not async): it must run after eventDetailsPage.js defines initEventDetailMap. #}
+<script
+    src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY | urlencode }}&callback=initEventDetailMap&loading=async&language={{ current_lang }}&region=GE"
+    defer
+></script>
+{% endif %}
 {% endblock %}

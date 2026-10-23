@@ -83,7 +83,7 @@
         return "minor";
     }
 
-    function formatPopup(event) {
+    function formatPopup(event, magnitude = window.getEventMagnitude?.(event)) {
         const lang = window.I18n?.getLanguage?.() || "en";
         const location =
             (lang === "ka" ? event.location_ge : event.location_en) ||
@@ -91,7 +91,6 @@
             event.location_ge ||
             event.area ||
             "—";
-        const magnitude = window.getEventMagnitude?.(event);
         const magHtml = magnitude
             ? `<span class="published-mag published-mag-${magnitudeLevel(magnitude.value)}">
                     <span class="published-mag-value">${escapeHtml(magnitude.value.toFixed(1))}</span>
@@ -279,6 +278,8 @@
     window.updateMapMarkers = updateMapMarkers;
     window.focusEventOnMap = focusEventOnMap;
     window.ensureEventsMap = ensureMap;
+    // Shared with the event details map so both look the same.
+    window.EventMapStyle = { formatPopup, markerIcon, markerKind, originTimeMs };
 
     document.addEventListener("DOMContentLoaded", () => {
         const hasGoogleScript = document.querySelector('script[src*="maps.googleapis.com"]');
