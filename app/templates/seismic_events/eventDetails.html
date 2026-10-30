@@ -86,16 +86,16 @@
             <li class="nav-item" role="presentation">
                 <button
                     class="nav-link"
-                    id="tab-map"
+                    id="tab-shakemap"
                     data-bs-toggle="tab"
-                    data-bs-target="#panel-map"
+                    data-bs-target="#panel-shakemap"
                     type="button"
                     role="tab"
-                    aria-controls="panel-map"
+                    aria-controls="panel-shakemap"
                     aria-selected="false"
-                    data-i18n="events.details.map"
+                    data-i18n="events.details.shakemap"
                 >
-                    Map
+                    ShakeMap
                 </button>
             </li>
         </ul>
@@ -130,11 +130,23 @@
 
             <div
                 class="tab-pane fade"
-                id="panel-map"
+                id="panel-shakemap"
                 role="tabpanel"
-                aria-labelledby="tab-map"
+                aria-labelledby="tab-shakemap"
             >
-                <div id="eventDetailsMap" class="event-detail-map-canvas"></div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-3">
+                        <div class="shakemap-layer-panel">
+                            <div class="fw-semibold mb-2" data-i18n="events.details.shakemap_layers">Layers</div>
+                            <div id="shakemap-layer-list" class="small text-muted" data-i18n="events.details.shakemap_waiting">
+                                Open this tab to load ShakeMap.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-9">
+                        <div id="shakemap-map" class="shakemap-map-canvas"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -144,7 +156,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/seismic_events/map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/seismic_events/shakemapView.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/seismic_events/editEvent.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/seismic_events/eventDetailsPage.js') }}" defer></script>
 {% if config.GOOGLE_MAPS_API_KEY %}

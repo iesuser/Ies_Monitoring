@@ -95,6 +95,17 @@ class Config:
         "on",
     }
 
+    # Automatic events are forwarded here after they are stored.
+    # The previous SeisComp script posted with certificate checks off.
+    SHAKEMAP_API_URL = os.getenv("SHAKEMAP_API_URL", "").strip()
+    SHAKEMAP_API_KEY = os.getenv("SHAKEMAP_API_KEY", "").strip()
+    SHAKEMAP_SSL_VERIFY = os.getenv("SHAKEMAP_SSL_VERIFY", "false").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
 class DevelopmentConfig(Config):
     DEBUG = True
     JWT_COOKIE_SECURE = False
@@ -129,6 +140,9 @@ class TestingConfig(Config):
     WP_AJAX_URL = "https://example.test/wp-admin/admin-ajax.php"
     WP_PUBLISH_CODE = "test-wp-publish-code"
     WP_SSL_VERIFY = True
+    SHAKEMAP_API_URL = ""
+    SHAKEMAP_API_KEY = ""
+    SHAKEMAP_SSL_VERIFY = True
 
 
 def get_config():
