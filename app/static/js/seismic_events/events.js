@@ -753,7 +753,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const deleteButton = event.target.closest("[data-delete-id]");
         if (deleteButton) {
-            window.deleteEvent?.(deleteButton.dataset.deleteId);
+            const eventId = deleteButton.dataset.deleteId;
+            const rowEvent = eventsById.get(Number(eventId));
+            window.deleteEvent?.(eventId, {
+                isPublished: Boolean(rowEvent?.is_published),
+            });
             return;
         }
 

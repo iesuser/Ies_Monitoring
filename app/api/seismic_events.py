@@ -719,8 +719,12 @@ class SeismicEventDetailApi(Resource):
     @seismic_events_ns.response(401, "Unauthorized", error_model)
     @seismic_events_ns.response(403, "Forbidden", error_model)
     @seismic_events_ns.response(404, "Not Found", error_model)
+    @seismic_events_ns.response(409, "Conflict", error_model)
     def delete(self, event_id):
-        """Delete a seismic event and related magnitudes/beachball (requires can_event_edit)."""
+        """Delete a seismic event and related magnitudes/beachball (requires can_event_edit).
+
+        Published events must be unpublished first.
+        """
         denied = _require_can_event_edit()
         if denied:
             return denied
@@ -728,6 +732,15 @@ class SeismicEventDetailApi(Resource):
         event, error = _get_event_or_404(event_id)
         if error:
             return error
+
+        if event.published_event is not None:
+            return {
+                "error": "conflict",
+                "message": (
+                    "This earthquake is published. Unpublish it first, "
+                    "then delete it."
+                ),
+            }, 409
 
         event_id_value = event.id
         seiscomp_oid = event.seiscomp_oid

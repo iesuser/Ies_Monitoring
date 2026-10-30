@@ -444,6 +444,8 @@
             "events.edit.delete": "Delete",
             "events.edit.success": "Event updated successfully.",
             "events.delete.confirm": "Are you sure you want to delete this earthquake?",
+            "events.delete.published_blocked":
+                "This earthquake is published. Unpublish it first, then delete it.",
             "events.delete.success": "Earthquake deleted successfully.",
 
             "alerts.session_expired": "Session has expired. Please sign in again.",
@@ -903,6 +905,8 @@
             "events.edit.delete": "წაშლა",
             "events.edit.success": "მოვლენა წარმატებით განახლდა.",
             "events.delete.confirm": "ნამდვილად გსურთ ამ მიწისძვრის წაშლა?",
+            "events.delete.published_blocked":
+                "ეს მიწისძვრა გამოქვეყნებულია. ჯერ გააუქმეთ გამოქვეყნება, შემდეგ წაშალეთ.",
             "events.delete.success": "მიწისძვრა წარმატებით წაიშალა.",
 
             "alerts.session_expired": "სესია დასრულებულია. გთხოვთ თავიდან შეხვიდეთ.",

@@ -564,6 +564,18 @@ function renderActions(event, permissions = {}) {
     });
 
     document.getElementById("eventDetailsDeleteBtn")?.addEventListener("click", async () => {
+        if (event.is_published) {
+            window.showAlert(
+                EVENT_DETAILS_ALERT_ID,
+                "warning",
+                t(
+                    "events.delete.published_blocked",
+                    "This earthquake is published. Unpublish it first, then delete it."
+                )
+            );
+            return;
+        }
+
         const confirmed = await window.confirmDelete?.({
             message: t(
                 "events.delete.confirm",
@@ -582,7 +594,7 @@ function renderActions(event, permissions = {}) {
         } catch (error) {
             window.showAlert(
                 EVENT_DETAILS_ALERT_ID,
-                "danger",
+                error.code === "conflict" ? "warning" : "danger",
                 error.message || t("events.error.delete", "Failed to delete earthquake.")
             );
         }

@@ -136,6 +136,15 @@ def test_publish_and_unpublish_with_jwt(client, admin_auth_headers, app):
     with app.app_context():
         assert PublishedEvent.query.filter_by(event_id=event_id).count() == 1
 
+    blocked = client.delete(
+        f"/api/seismic_events/event_id={event_id}",
+        headers=admin_auth_headers,
+    )
+    assert blocked.status_code == 409
+    assert "Unpublish" in blocked.get_json()["message"]
+    with app.app_context():
+        assert PublishedEvent.query.filter_by(event_id=event_id).count() == 1
+
     with patch("app.api.publish_events.unpublish_eq", return_value="ok-unpublish") as mock_unpublish:
         unpublish_response = client.post(
             f"/api/publish_events/unpublish/{event_id}",
@@ -150,6 +159,12 @@ def test_publish_and_unpublish_with_jwt(client, admin_auth_headers, app):
 
     with app.app_context():
         assert PublishedEvent.query.filter_by(event_id=event_id).count() == 0
+
+    deleted = client.delete(
+        f"/api/seismic_events/event_id={event_id}",
+        headers=admin_auth_headers,
+    )
+    assert deleted.status_code == 200
 
 
 def test_publish_manual_type_and_service_api_key(client, admin_auth_headers, app):
