@@ -3,12 +3,24 @@ function t(key, fallback) {
     return i18n ? i18n.t(key, fallback) : fallback;
 }
 
-async function deleteEvent(eventId) {
+async function deleteEvent(eventId, options = {}) {
     if (!eventId) {
         return;
     }
 
     if (!(await window.requireEventsAuth?.("delete an earthquake"))) {
+        return;
+    }
+
+    if (options.isPublished) {
+        window.showAlert(
+            options.alertId || "alertPlaceholder",
+            "warning",
+            t(
+                "events.delete.published_blocked",
+                "This earthquake is published. Unpublish it first, then delete it."
+            )
+        );
         return;
     }
 
@@ -28,14 +40,14 @@ async function deleteEvent(eventId) {
         });
         window.onEventDeleted?.(eventId);
         window.showAlert(
-            "alertPlaceholder",
+            options.alertId || "alertPlaceholder",
             "success",
             data.message || t("events.delete.success", "Earthquake deleted successfully.")
         );
     } catch (error) {
         window.showAlert(
-            "alertPlaceholder",
-            "danger",
+            options.alertId || "alertPlaceholder",
+            error.code === "conflict" ? "warning" : "danger",
             error.message || t("events.error.delete", "Failed to delete earthquake.")
         );
     }

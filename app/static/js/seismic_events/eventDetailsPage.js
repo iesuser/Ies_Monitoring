@@ -1,13 +1,5 @@
 const EVENT_DETAILS_ALERT_ID = "eventDetailsAlertPlaceholder";
 
-const DETAIL_MAP_ZOOM = 9;
-
-let detailMap = null;
-let detailMapMarker = null;
-let detailInfoWindow = null;
-let detailMapEvent = null;
-let detailMapAuthFailed = false;
-
 function t(key, fallback) {
     const i18n = window.I18n;
     return i18n ? i18n.t(key, fallback) : fallback;
@@ -308,101 +300,6 @@ function renderBeachball(beachball) {
     `;
 }
 
-function detailMapPosition(event) {
-    const lat = Number(event?.latitude);
-    const lng = Number(event?.longitude);
-    return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
-}
-
-function showDetailMapMessage(key, fallback) {
-    const mapElement = document.getElementById("eventDetailsMap");
-    if (!mapElement) {
-        return;
-    }
-    detailMap = null;
-    detailMapMarker = null;
-    detailInfoWindow = null;
-    mapElement.innerHTML = `<p class="text-muted mb-0 p-3">${escapeHtml(t(key, fallback))}</p>`;
-}
-
-function openDetailMapPopup() {
-    detailInfoWindow.setContent(detailMapMarker.popupHtml);
-    detailInfoWindow.open({ map: detailMap, anchor: detailMapMarker });
-}
-
-function renderDetailMap(event) {
-    detailMapEvent = event;
-    const mapElement = document.getElementById("eventDetailsMap");
-    if (!mapElement || detailMapAuthFailed) {
-        return;
-    }
-
-    const position = detailMapPosition(event);
-    if (!position) {
-        showDetailMapMessage("events.details.map_unavailable", "Map coordinates are unavailable.");
-        return;
-    }
-    if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
-        showDetailMapMessage("events.map.unavailable", "Map is unavailable.");
-        return;
-    }
-    if (!window.google?.maps?.Map) {
-        // The API is still loading; initEventDetailMap renders detailMapEvent when it is ready.
-        return;
-    }
-
-    const style = window.EventMapStyle;
-    if (!detailMap) {
-        mapElement.innerHTML = "";
-        detailMap = new google.maps.Map(mapElement, {
-            center: position,
-            zoom: DETAIL_MAP_ZOOM,
-            mapTypeId: google.maps.MapTypeId.HYBRID,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: true,
-            gestureHandling: "cooperative",
-        });
-        detailInfoWindow = new google.maps.InfoWindow();
-    } else {
-        detailMap.setCenter(position);
-    }
-
-    detailMapMarker?.setMap(null);
-    const kind = style.markerKind(style.originTimeMs(event.origin_time), false, Date.now());
-    detailMapMarker = new google.maps.Marker({
-        position,
-        map: detailMap,
-        title: `#${event.id ?? ""}`,
-        icon: style.markerIcon(kind),
-    });
-    detailMapMarker.popupHtml = style.formatPopup(event, getPreferredMagnitude(event));
-    detailMapMarker.addListener("click", openDetailMapPopup);
-}
-
-// The map is created inside a hidden tab; re-center once the tab has its real size.
-function invalidateDetailMap() {
-    const position = detailMapPosition(detailMapEvent);
-    if (detailMap && position) {
-        detailMap.setCenter(position);
-    }
-}
-
-// Called by the Google Maps script (callback=initEventDetailMap).
-window.initEventDetailMap = () => {
-    if (detailMapEvent) {
-        renderDetailMap(detailMapEvent);
-    }
-};
-
-const previousGmAuthFailure = window.gm_authFailure;
-// Google calls this when the API key is invalid or not allowed for this domain.
-window.gm_authFailure = () => {
-    previousGmAuthFailure?.();
-    detailMapAuthFailed = true;
-    showDetailMapMessage("events.map.unavailable", "Map is unavailable.");
-};
-
 function goToEventsList() {
     const path = window.I18n?.localizePath?.("/seismic_events") || "/seismic_events";
     window.location.href = path;
@@ -415,7 +312,7 @@ function applyEventToPage(event, permissions) {
     renderOverview(event);
     renderMagnitudes(event.magnitudes);
     renderBeachball(event.beachball);
-    renderDetailMap(event);
+    window.renderEventShakeMap?.(event);
     renderActions(event, permissions);
     window.I18n?.applyTranslations?.();
 }
@@ -667,6 +564,18 @@ function renderActions(event, permissions = {}) {
     });
 
     document.getElementById("eventDetailsDeleteBtn")?.addEventListener("click", async () => {
+        if (event.is_published) {
+            window.showAlert(
+                EVENT_DETAILS_ALERT_ID,
+                "warning",
+                t(
+                    "events.delete.published_blocked",
+                    "This earthquake is published. Unpublish it first, then delete it."
+                )
+            );
+            return;
+        }
+
         const confirmed = await window.confirmDelete?.({
             message: t(
                 "events.delete.confirm",
@@ -685,7 +594,7 @@ function renderActions(event, permissions = {}) {
         } catch (error) {
             window.showAlert(
                 EVENT_DETAILS_ALERT_ID,
-                "danger",
+                error.code === "conflict" ? "warning" : "danger",
                 error.message || t("events.error.delete", "Failed to delete earthquake.")
             );
         }
@@ -695,7 +604,6 @@ function renderActions(event, permissions = {}) {
 function showContent() {
     document.getElementById("eventDetailsLoading")?.classList.add("d-none");
     document.getElementById("eventDetailsContent")?.classList.remove("d-none");
-    invalidateDetailMap();
 }
 
 function showLoadingError(message) {
@@ -773,8 +681,8 @@ async function loadEventDetails() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("tab-map")?.addEventListener("shown.bs.tab", () => {
-        invalidateDetailMap();
+    document.getElementById("tab-shakemap")?.addEventListener("shown.bs.tab", () => {
+        window.refreshShakeMap?.();
     });
     loadEventDetails();
 });

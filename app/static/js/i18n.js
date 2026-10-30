@@ -329,6 +329,11 @@
             "events.details.overview": "Overview",
             "events.details.map": "Map",
             "events.details.map_unavailable": "Map coordinates are unavailable.",
+            "events.details.shakemap": "ShakeMap",
+            "events.details.shakemap_layers": "Layers",
+            "events.details.shakemap_waiting": "Open this tab to load ShakeMap.",
+            "events.details.shakemap_empty": "ShakeMap has not been calculated for this event yet.",
+            "events.details.shakemap_no_oid": "This earthquake has no SeisComP id, so ShakeMap cannot be loaded.",
             "events.details.event_prefix": "Event",
             "events.details.lat_lon": "Lat / Lon",
             "events.details.is_automatic": "Automatic",
@@ -439,6 +444,8 @@
             "events.edit.delete": "Delete",
             "events.edit.success": "Event updated successfully.",
             "events.delete.confirm": "Are you sure you want to delete this earthquake?",
+            "events.delete.published_blocked":
+                "This earthquake is published. Unpublish it first, then delete it.",
             "events.delete.success": "Earthquake deleted successfully.",
 
             "alerts.session_expired": "Session has expired. Please sign in again.",
@@ -783,6 +790,11 @@
             "events.details.overview": "მიმოხილვა",
             "events.details.map": "რუკა",
             "events.details.map_unavailable": "რუკის კოორდინატები მიუწვდომელია.",
+            "events.details.shakemap": "ShakeMap",
+            "events.details.shakemap_layers": "ფენები",
+            "events.details.shakemap_waiting": "გახსენით ეს ჩანართი ShakeMap-ის ჩასატვირთად.",
+            "events.details.shakemap_empty": "ამ მიწისძვრისთვის ShakeMap ჯერ არ არის დათვლილი.",
+            "events.details.shakemap_no_oid": "მიწისძვრას არ აქვს SeisComP იდენტიფიკატორი, ამიტომ ShakeMap ვერ ჩაიტვირთება.",
             "events.details.event_prefix": "მოვლენა",
             "events.details.lat_lon": "განედი / გრძედი",
             "events.details.is_automatic": "ავტომატური",
@@ -893,6 +905,8 @@
             "events.edit.delete": "წაშლა",
             "events.edit.success": "მოვლენა წარმატებით განახლდა.",
             "events.delete.confirm": "ნამდვილად გსურთ ამ მიწისძვრის წაშლა?",
+            "events.delete.published_blocked":
+                "ეს მიწისძვრა გამოქვეყნებულია. ჯერ გააუქმეთ გამოქვეყნება, შემდეგ წაშალეთ.",
             "events.delete.success": "მიწისძვრა წარმატებით წაიშალა.",
 
             "alerts.session_expired": "სესია დასრულებულია. გთხოვთ თავიდან შეხვიდეთ.",

@@ -415,6 +415,7 @@ function setAreaValue(area) {
 
 function fillEventForm(event) {
     document.getElementById("editEventId").value = event.id || "";
+    document.getElementById("editEventIsPublished").value = event.is_published ? "1" : "0";
     document.getElementById("editEventOriginTime").value = toOriginTimeInputValue(
         event.origin_time
     );
@@ -571,6 +572,18 @@ async function deleteEventFromModal() {
         return;
     }
 
+    if (document.getElementById("editEventIsPublished")?.value === "1") {
+        window.showAlert(
+            EDIT_EVENT_ALERT_ID,
+            "warning",
+            t(
+                "events.delete.published_blocked",
+                "This earthquake is published. Unpublish it first, then delete it."
+            )
+        );
+        return;
+    }
+
     const confirmed = await window.confirmDelete({
         message: t(
             "events.delete.confirm",
@@ -598,7 +611,7 @@ async function deleteEventFromModal() {
     } catch (error) {
         window.showAlert(
             EDIT_EVENT_ALERT_ID,
-            "danger",
+            error.code === "conflict" ? "warning" : "danger",
             error.message || t("events.error.delete", "Failed to delete earthquake.")
         );
     } finally {

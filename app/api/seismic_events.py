@@ -1,5 +1,6 @@
 import logging
 
+from flask import Response, request
 from flask_restx import Resource, marshal
 from sqlalchemy import String, and_, case, cast, exists, func, or_, select
 from sqlalchemy.exc import IntegrityError
@@ -31,6 +32,13 @@ from app.api.nsmodels.seismic_events import (
 from app.models import SeismicEvent, Magnitude, EventMagnitude, EventBeachball, PublishedEvent
 from app.utils.auth_utils import require_permissions, resolve_actor
 from app.utils.gen_beachball_img import delete_beachball_image, sync_beachball_image
+from app.utils.shakemap_client import (
+    ShakeMapError,
+    delete_event as delete_shakemap_event,
+    fetch_product,
+    load_view,
+    sync_event,
+)
 
 logger = logging.getLogger("app.seismic_events")
 
@@ -118,6 +126,34 @@ def _event_detail_or_404(event):
     if event is None:
         return {"error": "not_found", "message": "Seismic event not found."}, 404
     return marshal(event.to_dict(), seismic_event_model), 200
+
+
+def _maybe_sync_shakemap(event):
+    """Send a saved event to ShakeMap when it has a SeisComP id, depth, and ML.
+
+    A ShakeMap failure is logged and does not undo the event stored here.
+    """
+    try:
+        sync_event(event)
+    except Exception:
+        logger.exception(
+            "ShakeMap sync failed: event_id=%s seiscomp_oid=%s",
+            event.id,
+            event.seiscomp_oid,
+        )
+
+
+def _maybe_delete_shakemap(seiscomp_oid):
+    """Remove the matching ShakeMap event. Local delete is not undone on failure."""
+    if not (seiscomp_oid or "").strip():
+        return
+    try:
+        delete_shakemap_event(seiscomp_oid)
+    except Exception:
+        logger.exception(
+            "ShakeMap delete failed: seiscomp_oid=%s",
+            seiscomp_oid,
+        )
 
 
 def _optional_str(value):
@@ -580,6 +616,7 @@ class SeismicEventsApi(Resource):
             return {"error": "validation_error", "message": str(err)}, 400
 
         logger.info("Seismic event created: event_id=%s", event.id)
+        _maybe_sync_shakemap(event)
         return marshal(
             {"message": "Seismic event created successfully.", "event": event.to_dict()},
             seismic_event_response_model,
@@ -671,6 +708,7 @@ class SeismicEventDetailApi(Resource):
             return {"error": "validation_error", "message": str(err)}, 400
 
         logger.info("Seismic event updated: event_id=%s", event.id)
+        _maybe_sync_shakemap(event)
         return marshal(
             {"message": "Seismic event updated successfully.", "event": event.to_dict()},
             seismic_event_response_model,
@@ -681,8 +719,12 @@ class SeismicEventDetailApi(Resource):
     @seismic_events_ns.response(401, "Unauthorized", error_model)
     @seismic_events_ns.response(403, "Forbidden", error_model)
     @seismic_events_ns.response(404, "Not Found", error_model)
+    @seismic_events_ns.response(409, "Conflict", error_model)
     def delete(self, event_id):
-        """Delete a seismic event and related magnitudes/beachball (requires can_event_edit)."""
+        """Delete a seismic event and related magnitudes/beachball (requires can_event_edit).
+
+        Published events must be unpublished first.
+        """
         denied = _require_can_event_edit()
         if denied:
             return denied
@@ -691,9 +733,20 @@ class SeismicEventDetailApi(Resource):
         if error:
             return error
 
+        if event.published_event is not None:
+            return {
+                "error": "conflict",
+                "message": (
+                    "This earthquake is published. Unpublish it first, "
+                    "then delete it."
+                ),
+            }, 409
+
         event_id_value = event.id
+        seiscomp_oid = event.seiscomp_oid
         event.delete()
         delete_beachball_image(event_id_value)
+        _maybe_delete_shakemap(seiscomp_oid)
         logger.info("Seismic event deleted: event_id=%s", event_id_value)
         return marshal({"message": "Seismic event deleted successfully."}, message_response_model), 200
 
@@ -753,6 +806,7 @@ class EventMagnitudesApi(Resource):
             event.id,
             item.id,
         )
+        _maybe_sync_shakemap(event)
         return marshal(
             {
                 "message": "Event magnitude added successfully.",
@@ -812,6 +866,7 @@ class EventMagnitudeDetailApi(Resource):
             }, 409
 
         logger.info("Event magnitude updated: event_magnitude_id=%s", item.id)
+        _maybe_sync_shakemap(item.event)
         return marshal(
             {
                 "message": "Event magnitude updated successfully.",
@@ -1004,3 +1059,61 @@ class EventBeachballApi(Resource):
         delete_beachball_image(event.id)
         logger.info("Beachball deleted: event_id=%s beachball_id=%s", event.id, beachball_id)
         return marshal({"message": "Beachball deleted successfully."}, message_response_model), 200
+
+
+def _shakemap_error_response(exc):
+    status = exc.status or 502
+    if status == 400:
+        return {"error": "validation_error", "message": str(exc)}, 400
+    if status == 404:
+        return {"error": "not_found", "message": str(exc)}, 404
+    if status == 503:
+        return {"error": "configuration_error", "message": str(exc)}, 503
+    return {"error": "upstream_error", "message": str(exc)}, 502
+
+
+@seismic_events_ns.route("/shakemap/view")
+class ShakeMapViewApi(Resource):
+    @seismic_events_ns.doc(security=JWT_OR_API_KEY)
+    @seismic_events_ns.response(200, "Success")
+    @seismic_events_ns.response(400, "Validation Error", error_model)
+    @seismic_events_ns.response(401, "Unauthorized", error_model)
+    @seismic_events_ns.response(403, "Forbidden", error_model)
+    @seismic_events_ns.response(502, "Bad Gateway", error_model)
+    @seismic_events_ns.response(503, "Configuration Error", error_model)
+    def get(self):
+        """Products for the details map. Missing ShakeMap files are omitted."""
+        denied = _require_can_event_view()
+        if denied:
+            return denied
+
+        seiscomp_oid = (request.args.get("seiscomp_oid") or "").strip()
+        try:
+            return load_view(seiscomp_oid)
+        except ShakeMapError as exc:
+            return _shakemap_error_response(exc)
+
+
+@seismic_events_ns.route("/shakemap/product/<string:filename>")
+class ShakeMapProductApi(Resource):
+    @seismic_events_ns.doc(security=JWT_OR_API_KEY)
+    @seismic_events_ns.response(200, "Success")
+    @seismic_events_ns.response(400, "Validation Error", error_model)
+    @seismic_events_ns.response(401, "Unauthorized", error_model)
+    @seismic_events_ns.response(403, "Forbidden", error_model)
+    @seismic_events_ns.response(404, "Not Found", error_model)
+    @seismic_events_ns.response(502, "Bad Gateway", error_model)
+    @seismic_events_ns.response(503, "Configuration Error", error_model)
+    def get(self, filename):
+        """Proxy one calculated ShakeMap product (requires can_event_view or can_event_edit)."""
+        denied = _require_can_event_view()
+        if denied:
+            return denied
+
+        seiscomp_oid = (request.args.get("seiscomp_oid") or "").strip()
+        try:
+            content, content_type = fetch_product(seiscomp_oid, filename)
+        except ShakeMapError as exc:
+            return _shakemap_error_response(exc)
+
+        return Response(content, status=200, mimetype=content_type)
