@@ -57,12 +57,20 @@ def _settings():
     return url, api_key, verify
 
 
+# ShakeMap's create body has one ml field. Prefer these codes in this order.
+_MAGNITUDE_PRIORITY = ("ML", "MLV", "M")
+
+
 def _local_magnitude(event):
-    """ShakeMap POST /api/events requires a single ml value."""
+    """Pick the magnitude value to send as ShakeMap's ml field."""
+    by_code = {}
     for item in event.event_magnitudes:
         code = item.magnitude.code if item.magnitude else None
-        if code and code.upper() == "ML":
-            return item.value
+        if code:
+            by_code[code.upper()] = item.value
+    for code in _MAGNITUDE_PRIORITY:
+        if code in by_code:
+            return by_code[code]
     return None
 
 
@@ -70,6 +78,7 @@ def _payload(event):
     """Body for ShakeMap POST /api/events.
 
     Required there: seiscomp_oid, origin_time, latitude, longitude, depth, ml.
+    Depth may be 0. Magnitude is ML, else MLV, else M.
     """
     ml = _local_magnitude(event)
     if ml is None or event.depth is None or event.origin_time is None:
@@ -335,9 +344,9 @@ def sync_event(event, timeout=20):
     """Create the event on ShakeMap, then start calculation for its SeisComP id.
 
     POST /api/events, then POST /api/shakemap with {"seiscomp_oid": ...}.
-    Runs for any saved event that has a SeisComP id, depth, and ML, including
-    one added by hand. Returns None when there is nothing to send (including
-    when ShakeMap is not configured). Raises ShakeMapError when a call fails.
+    Runs for any saved event that has a SeisComP id, a depth (including 0),
+    and ML/MLV/M. Returns None when there is nothing to send (including when
+    ShakeMap is not configured). Raises ShakeMapError when a call fails.
     """
     if not (event.seiscomp_oid or "").strip():
         return None
@@ -347,7 +356,8 @@ def sync_event(event, timeout=20):
     payload = _payload(event)
     if payload is None:
         logger.warning(
-            "ShakeMap sync skipped: ML and depth are required. event_id=%s seiscomp_oid=%s",
+            "ShakeMap sync skipped: depth and ML/MLV/M are required. "
+            "event_id=%s seiscomp_oid=%s",
             event.id,
             event.seiscomp_oid,
         )

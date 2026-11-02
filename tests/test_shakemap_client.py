@@ -101,7 +101,7 @@ def test_sync_sends_a_hand_added_event(app):
     assert post.call_args_list[1].kwargs["json"] == {"seiscomp_oid": "ies2026nrtc"}
 
 
-def test_sync_skips_events_without_oid_depth_or_ml(app):
+def test_sync_skips_events_without_oid_depth_or_preferred_magnitude(app):
     _enable(app)
     with patch("app.utils.shakemap_client.requests.post") as post:
         with app.app_context():
@@ -110,6 +110,38 @@ def test_sync_skips_events_without_oid_depth_or_ml(app):
             assert sync_event(_Event(event_magnitudes=[_EventMagnitude("MW", 3.2)])) is None
             assert sync_event(_Event(depth=None)) is None
     post.assert_not_called()
+
+
+def test_sync_uses_magnitude_priority_and_allows_zero_depth(app):
+    _enable(app)
+
+    def run(event):
+        with patch("app.utils.shakemap_client.requests.post") as post:
+            post.side_effect = [_Response(201, {}), _Response(202, {})]
+            with app.app_context():
+                result = sync_event(event)
+            return result, post.call_args_list[0].kwargs["json"]
+
+    result, payload = run(
+        _Event(
+            depth=0,
+            event_magnitudes=[
+                _EventMagnitude("MW", 4.0),
+                _EventMagnitude("M", 2.1),
+                _EventMagnitude("MLV", 3.1),
+                _EventMagnitude("ML", 3.7),
+            ],
+        )
+    )
+    assert result["event_status"] == 201
+    assert payload["depth"] == 0
+    assert payload["ml"] == 3.7
+
+    _, payload = run(_Event(event_magnitudes=[_EventMagnitude("M", 2.1), _EventMagnitude("MLV", 3.1)]))
+    assert payload["ml"] == 3.1
+
+    _, payload = run(_Event(event_magnitudes=[_EventMagnitude("M", 2.1)]))
+    assert payload["ml"] == 2.1
 
 
 def test_sync_skips_when_shakemap_is_not_configured(app):
